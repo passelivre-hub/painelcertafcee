@@ -54,6 +54,16 @@ header .logos {
   align-items: center;
 }
 
+header .logos .logo-img {
+  height: 64px;
+  width: auto;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
 .logo-placeholder {
   width: 90px;
   height: 56px;

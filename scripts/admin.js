@@ -50,6 +50,19 @@ function bindEvents() {
     renderTable();
   });
 
+  document.getElementById('reset-data-btn').addEventListener('click', async () => {
+    const confirmed = confirm('Deseja restaurar o cadastro inicial e remover colunas personalizadas?');
+    if (!confirmed) return;
+
+    customColumns = [];
+    institutions = await fetchCsvData();
+    saveCustomColumns(customColumns);
+    saveInstitutions(institutions);
+    populateNewTypeSelect();
+    renderTable();
+    alert('Dados restaurados com sucesso.');
+  });
+
   document.getElementById('logout-btn').addEventListener('click', () => {
     localStorage.removeItem(sessionKey);
     location.reload();

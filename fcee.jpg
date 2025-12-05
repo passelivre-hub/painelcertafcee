@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="520" viewBox="0 0 480 520" role="img" aria-label="Logotipo FCEE">
+  <defs>
+    <linearGradient id="grad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e63946"/>
+      <stop offset="100%" stop-color="#b3132e"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff" rx="24"/>
+  <g transform="translate(40 30)" fill="url(#grad)">
+    <circle cx="280" cy="52" r="42"/>
+    <path d="M50 190c65-55 140-55 215-32 35 12 80 36 97 66 11 19-3 43-25 46-71 10-127-33-199-30-22 1-43 5-63 12-26 10-50-17-25-39z"/>
+    <path d="M65 308c18-38 64-61 126-69 68-9 123 2 185 36 24 13 16 49-11 53-105 16-154 6-227 16-30 4-77 8-99-10-12-9-10-19-3-26z"/>
+  </g>
+  <g transform="translate(40 320)" fill="#111" font-family="'Inter', 'Segoe UI', Arial, sans-serif">
+    <text x="0" y="52" font-size="96" font-weight="900" letter-spacing="2">FCEE</text>
+    <text x="0" y="108" font-size="34" font-weight="700">Fundação Catarinense</text>
+    <text x="0" y="148" font-size="34" font-weight="700">de Educação Especial</text>
+  </g>
+</svg>
