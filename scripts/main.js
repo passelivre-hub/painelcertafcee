@@ -17,8 +17,8 @@ function renderCharts() {
   const tipoCtx = document.getElementById('chart-tipos');
   const regiaoCtx = document.getElementById('chart-regioes');
 
-  const tipoData = [totals.oficinas, totals.recursoTA, totals.recursosPedagogicos, totals.openDay];
-  const labelsTipo = ['Oficinas', 'Recursos de TA', 'Recursos Pedagógicos', 'Open Day'];
+  const tipoData = [totals.servicos, totals.recursoTA, totals.openDay];
+  const labelsTipo = ['Serviços', 'Recursos de TA', 'Open Day'];
 
   const regiaoData = REGIOES.map((reg) => regiaoTotals[reg] || 0);
 
@@ -33,7 +33,7 @@ function renderCharts() {
         {
           label: 'Quantidade',
           data: tipoData,
-          backgroundColor: ['#c60c2f', '#d63c55', '#e46a7d', '#f49ca9'],
+          backgroundColor: ['#c60c2f', '#d63c55', '#e46a7d'],
           borderRadius: 8,
         },
       ],
@@ -115,7 +115,7 @@ function hasAtendimento(nome) {
   const totais = certaData.aggregateMunicipios(dados);
   const info = totais[nome];
   if (!info) return false;
-  return info.oficinas + info.recursoTA + info.recursosPedagogicos + info.openDay > 0;
+  return info.servicos + info.recursoTA + info.openDay > 0;
 }
 
 function estiloMunicipio(feature) {
@@ -146,7 +146,7 @@ function abrirPopup(municipio, layer) {
 
   const lista = instituicoes
     .map((inst) => {
-      return `<li><strong>${inst.instituicao}</strong><br>Oficinas: ${inst.oficinas} · Recursos TA: ${inst.recursoTA}<br>Recursos Pedagógicos: ${inst.recursosPedagogicos} · Open Day: ${inst.openDay}</li>`;
+      return `<li><strong>${inst.instituicao}</strong><br>Serviços: ${inst.servicos} · Recursos TA: ${inst.recursoTA}<br>Open Day: ${inst.openDay}</li>`;
     })
     .join('');
 

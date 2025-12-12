@@ -24,10 +24,9 @@ function renderTabela() {
       <th>Município</th>
       <th>Região</th>
       <th>Nome da Instituição</th>
-      <th>Qt de Oficinas</th>
+      <th>Qt de Serviços</th>
       <th>Qt de Recurso de TA</th>
-      <th>Recursos Pedagógicos</th>
-      <th>Open Day</th>
+      <th>Qt de Open Day</th>
       <th>Ações</th>
     </tr>`;
   tabela.appendChild(header);
@@ -39,9 +38,8 @@ function renderTabela() {
       <td><input type="text" value="${item.municipio}" data-field="municipio" data-idx="${idx}"></td>
       <td>${criarSelectRegiao(item.regiao, idx)}</td>
       <td><input type="text" value="${item.instituicao}" data-field="instituicao" data-idx="${idx}"></td>
-      <td><input type="number" min="0" value="${item.oficinas}" data-field="oficinas" data-idx="${idx}"></td>
+      <td><input type="number" min="0" value="${item.servicos}" data-field="servicos" data-idx="${idx}"></td>
       <td><input type="number" min="0" value="${item.recursoTA}" data-field="recursoTA" data-idx="${idx}"></td>
-      <td><input type="number" min="0" value="${item.recursosPedagogicos}" data-field="recursosPedagogicos" data-idx="${idx}"></td>
       <td><input type="number" min="0" value="${item.openDay}" data-field="openDay" data-idx="${idx}"></td>
       <td><button class="secondary" data-action="remove" data-idx="${idx}">Excluir</button></td>
     `;
@@ -83,9 +81,8 @@ function adicionarLinha() {
     municipio: 'Novo município',
     regiao: REGIOES[0],
     instituicao: 'Nova instituição',
-    oficinas: 0,
+    servicos: 0,
     recursoTA: 0,
-    recursosPedagogicos: 0,
     openDay: 0,
   });
   renderTabela();
