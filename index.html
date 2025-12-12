@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Estatístico CERTA - FCEE</title>
+  <link rel="stylesheet" href="styles/style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-logos">
+      <!-- Se você tiver logos no repositório, ajuste os caminhos abaixo -->
+      <!-- <img class="logo-img" src="img/logo_fcee.png" alt="FCEE" /> -->
+      <!-- <img class="logo-img" src="img/logo_gov_sc.png" alt="GovSC" /> -->
+    </div>
+
+    <div class="hero-title">
+      <h1>Painel Estatístico CERTA - FCEE</h1>
+      <p>Centro de Referência em Tecnologia Assistiva</p>
+    </div>
+
+    <div class="hero-actions"></div>
+  </header>
+
+  <main class="main-content">
+    <section class="top-row">
+      <article class="card">
+        <h2>Número de Capacitações e Recursos por Tipo</h2>
+        <div class="chart-container"><canvas id="chart-tipos"></canvas></div>
+      </article>
+
+      <article class="card">
+        <h2>Centros FCEE x Diversas Regiões do Estado</h2>
+        <div class="chart-container"><canvas id="chart-locais"></canvas></div>
+      </article>
+    </section>
+
+    <section class="map-row">
+      <div class="map-header">
+        <h2>Mapa de Santa Catarina</h2>
+        <div class="map-tooltip">Municípios com instituições cadastradas aparecem em vermelho.<br/>Clique para ver a lista.</div>
+      </div>
+      <div id="map"></div>
+    </section>
+  </main>
+
+  <script src="scripts/certa-data.js"></script>
+  <script src="scripts/shared-data.js"></script>
+  <script src="scripts/main.js"></script>
+</body>
+</html>
