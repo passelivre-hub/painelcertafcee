@@ -8,6 +8,7 @@ let map;
 let municipalityToCre = {};
 let selectedCreCode = null;
 let detailChart;
+let modalEl;
 
 const normalizeName = (str) =>
   (str || '')
@@ -21,6 +22,7 @@ function init() {
   renderHero();
   setupTotals();
   setupCharts();
+  setupModal();
   initMap();
 }
 
@@ -71,37 +73,22 @@ function setupCharts() {
       cutout: '55%'
     },
   });
+}
 
-  const ctxCobertura = document.getElementById('coberturaChart').getContext('2d');
-  new Chart(ctxCobertura, {
-    type: 'bar',
-    data: {
-      labels: creData.slice(0, 12).map((c) => c.name.split(' - ')[1]),
-      datasets: [
-        {
-          label: '% Estudantes fora do AEE',
-          data: creData.slice(0, 12).map((c) => Number(calculateCoverage(c).percForaAEE.toFixed(1))),
-          backgroundColor: '#2f7a4d',
-        },
-        {
-          label: '% Escolas sem AEE',
-          data: creData.slice(0, 12).map((c) => Number(calculateCoverage(c).percEscolasSemAEE.toFixed(1))),
-          backgroundColor: '#a7e3b2',
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          ticks: { callback: (v) => `${v}%` },
-        },
-      },
-      plugins: { legend: { position: 'bottom' } },
-    },
-  });
+function setupModal() {
+  modalEl = document.getElementById('cre-modal');
+  const closeBtn = document.getElementById('cre-modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeModal);
+  }
+  if (modalEl) {
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  }
 }
 
 function initMap() {
@@ -174,7 +161,7 @@ function buildMunicipalityIndex() {
   const index = {};
   const creLookup = {};
   creData.forEach((cre) => {
-    const creName = cre.name.split(' - ')[1];
+    const creName = cre.regionName || cre.name.replace(/^CRE\s*/i, '');
     creLookup[normalizeName(creName)] = cre.code;
   });
 
@@ -190,7 +177,7 @@ function buildMunicipalityIndex() {
 }
 
 function renderCreDetail(cre, municipioName) {
-  const container = document.getElementById('cre-detail');
+  const container = document.getElementById('cre-modal');
   const coverage = calculateCoverage(cre);
   const semAEELabel = 'Fora do AEE';
   const semEscolaAEELabel = 'Escolas sem AEE';
@@ -207,12 +194,16 @@ function renderCreDetail(cre, municipioName) {
   container.querySelector('[data-field="escolas-sem-aee"]').textContent = `${coverage.escolasSemAEE} (${coverage.percEscolasSemAEE.toFixed(1)}%)`;
   container.classList.add('active');
 
+  if (modalEl) {
+    modalEl.classList.add('open');
+  }
+
   const chartCtx = document.getElementById('creChart').getContext('2d');
   if (detailChart) detailChart.destroy();
   detailChart = new Chart(chartCtx, {
-    type: 'radar',
+    type: 'bar',
     data: {
-      labels: ['Público EE', 'Estudantes no AEE', semAEELabel, 'Escolas com AEE', semEscolaAEELabel, 'Participantes'],
+      labels: ['Público EE', 'Estudantes no AEE', semAEELabel, 'Escolas', 'Escolas com AEE', semEscolaAEELabel, 'Participantes'],
       datasets: [
         {
           label: cre.name,
@@ -220,22 +211,31 @@ function renderCreDetail(cre, municipioName) {
             cre.publicoEE,
             cre.estudantesAEE,
             coverage.faltantesAEE,
+            cre.escolas,
             cre.escolasAEE,
             coverage.escolasSemAEE,
             cre.participantes,
           ],
-          backgroundColor: 'rgba(0, 122, 74, 0.3)',
-          borderColor: '#0b7a3d',
-          borderWidth: 2,
-          pointBackgroundColor: '#0b7a3d',
+          backgroundColor: ['#a7e3b2', '#57c17b', '#f59e0b', '#c7f2cf', '#2f7a4d', '#fbbf24', '#0b7a3d'],
+          borderWidth: 0,
         },
       ],
     },
     options: {
-      scales: { r: { angleLines: { color: '#dfe7e2' }, grid: { color: '#dfe7e2' } } },
+      indexAxis: 'y',
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#dfe7e2' } },
+        y: { grid: { display: false } },
+      },
       plugins: { legend: { display: false } },
     },
   });
+}
+
+function closeModal() {
+  if (modalEl) {
+    modalEl.classList.remove('open');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

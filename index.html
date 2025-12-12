@@ -48,65 +48,69 @@
       <div id="general-indicators" class="stat-grid"></div>
       <div class="charts-grid">
         <div class="chart-card">
-          <div class="card-title">Distribuição das assessorias</div>
-          <canvas id="modoChart" height="180"></canvas>
+          <div class="card-title">Modalidade das assessorias</div>
+          <canvas id="modoChart" height="140"></canvas>
           <div class="chart-legend">Presenciais: <strong id="totals-presencial">0</strong> · Online: <strong id="totals-online">0</strong></div>
-        </div>
-        <div class="chart-card">
-          <div class="card-title">Cobertura AEE (amostra de CREs)</div>
-          <canvas id="coberturaChart" height="180"></canvas>
-        </div>
-      </div>
-
-      <div id="cre-detail" class="cre-detail">
-        <div>
-          <h3 class="cre-title">Selecione uma CRE no mapa</h3>
-          <p class="cre-subtitle">Município selecionado: -</p>
-        </div>
-        <div class="detail-grid">
-          <div class="detail-card">
-            <span> Público da Educação Especial </span>
-            <strong data-field="publico-ee">-</strong>
-          </div>
-          <div class="detail-card">
-            <span> Escolas </span>
-            <strong data-field="escolas">-</strong>
-          </div>
-          <div class="detail-card">
-            <span> Escolas com AEE </span>
-            <strong data-field="escolas-aee">-</strong>
-          </div>
-          <div class="detail-card">
-            <span> Estudantes no AEE </span>
-            <strong data-field="estudantes-aee">-</strong>
-          </div>
-          <div class="detail-card">
-            <span>Participantes</span>
-            <strong data-field="participantes">-</strong>
-          </div>
-          <div class="detail-card">
-            <span>Assessorias Presenciais</span>
-            <strong data-field="presencial">-</strong>
-          </div>
-          <div class="detail-card">
-            <span>Assessorias Online</span>
-            <strong data-field="online">-</strong>
-          </div>
-          <div class="detail-card warning">
-            <span>Estudantes fora do AEE</span>
-            <strong data-field="faltantes">-</strong>
-          </div>
-          <div class="detail-card warning">
-            <span>Escolas sem AEE</span>
-            <strong data-field="escolas-sem-aee">-</strong>
-          </div>
-        </div>
-        <div class="detail-chart">
-          <canvas id="creChart" height="160"></canvas>
         </div>
       </div>
     </section>
   </main>
+
+  <div id="cre-modal" class="cre-modal">
+    <div class="cre-modal__content">
+      <button id="cre-modal-close" class="modal-close" aria-label="Fechar">×</button>
+      <div class="modal-header">
+        <div>
+          <h3 class="cre-title">Selecione uma CRE no mapa</h3>
+          <p class="cre-subtitle">Município selecionado: -</p>
+        </div>
+        <div class="modal-badges">
+          <span class="badge">Detalhes completos da CRE</span>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-card">
+          <span> Público da Educação Especial </span>
+          <strong data-field="publico-ee">-</strong>
+        </div>
+        <div class="detail-card">
+          <span> Escolas </span>
+          <strong data-field="escolas">-</strong>
+        </div>
+        <div class="detail-card">
+          <span> Escolas com AEE </span>
+          <strong data-field="escolas-aee">-</strong>
+        </div>
+        <div class="detail-card">
+          <span> Estudantes no AEE </span>
+          <strong data-field="estudantes-aee">-</strong>
+        </div>
+        <div class="detail-card">
+          <span>Participantes</span>
+          <strong data-field="participantes">-</strong>
+        </div>
+        <div class="detail-card">
+          <span>Assessorias Presenciais</span>
+          <strong data-field="presencial">-</strong>
+        </div>
+        <div class="detail-card">
+          <span>Assessorias Online</span>
+          <strong data-field="online">-</strong>
+        </div>
+        <div class="detail-card warning">
+          <span>Estudantes fora do AEE</span>
+          <strong data-field="faltantes">-</strong>
+        </div>
+        <div class="detail-card warning">
+          <span>Escolas sem AEE</span>
+          <strong data-field="escolas-sem-aee">-</strong>
+        </div>
+      </div>
+      <div class="detail-chart">
+        <canvas id="creChart" height="140"></canvas>
+      </div>
+    </div>
+  </div>
 
   <script src="scripts/cre-data.js"></script>
   <script src="scripts/shared-data.js"></script>

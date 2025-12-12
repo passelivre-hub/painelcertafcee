@@ -1,19 +1,36 @@
 const CRE_STORAGE_KEY = 'naee-cre-metrics-v1';
 
+function normalizeCreRecords(list) {
+  return list.map((cre, index) => {
+    const regionName = cre.regionName || (cre.name || '').replace(/^CRE\s*\d+\s*-\s*/i, '').replace(/^CRE\s*/i, '').trim();
+    const name = `CRE ${regionName}`.trim();
+    const code = cre.code || `CRE${String(index + 1).padStart(2, '0')}`;
+    return {
+      ...cre,
+      code,
+      name,
+      regionName,
+    };
+  });
+}
+
 function loadCreData() {
   const stored = localStorage.getItem(CRE_STORAGE_KEY);
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length === DEFAULT_CRE_DATA.length) {
-        return parsed;
+        const normalized = normalizeCreRecords(parsed);
+        localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(normalized));
+        return normalized;
       }
     } catch (err) {
       console.warn('Falha ao ler armazenamento local, usando padrão', err);
     }
   }
-  localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(DEFAULT_CRE_DATA));
-  return [...DEFAULT_CRE_DATA];
+  const normalizedDefault = normalizeCreRecords(DEFAULT_CRE_DATA);
+  localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(normalizedDefault));
+  return [...normalizedDefault];
 }
 
 function saveCreData(data) {

@@ -278,7 +278,8 @@ function generateDefaultCreData(names = CRE_NAMES) {
     const online = 15 + (index % 7) * 4;
     return {
       code: `CRE${String(index + 1).padStart(2, '0')}`,
-      name: `CRE ${String(index + 1).padStart(2, '0')} - ${name}`,
+      name: `CRE ${name}`,
+      regionName: name,
       colorIndex: index,
       publicoEE,
       escolas,
