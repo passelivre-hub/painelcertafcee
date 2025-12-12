@@ -28,6 +28,10 @@ body {
   overflow: hidden;
 }
 
+body.admin-page {
+  overflow-y: auto;
+}
+
 .hero {
   position: relative;
   display: grid;

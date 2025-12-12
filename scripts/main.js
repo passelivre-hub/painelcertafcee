@@ -125,7 +125,7 @@ function initMap() {
         onEachFeature: attachFeatureEvents,
       });
       layer.addTo(map);
-      if (mapStatus) mapStatus.textContent = 'Mapa pronto. Clique em um município para abrir a CRE.';
+      if (mapStatus) mapStatus.textContent = '';
       setTimeout(() => map.invalidateSize(), 100);
     })
     .catch((err) => {
