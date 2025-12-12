@@ -32,9 +32,11 @@ function init() {
 function renderHero() {
   const heading = document.querySelector('#hero-title');
   if (heading) {
+    const kicker = heading.querySelector('.hero-kicker');
+    if (kicker) kicker.textContent = 'SAEEX/NAEE - FCEE';
     heading.querySelector('h1').textContent = 'Painel de Assessorias';
     const subtitle = heading.querySelector('.hero-sub');
-    if (subtitle) subtitle.textContent = 'SAEEX/NAEE - FCEE · Educação Especial em Santa Catarina';
+    if (subtitle) subtitle.textContent = '';
   }
 }
 
@@ -183,6 +185,7 @@ function buildMunicipalityIndex() {
       index[normalizeName(municipio)] = code;
     }
   });
+}
 
   return index;
 }
@@ -218,19 +221,17 @@ function closeModal() {
 }
 
 function renderGeneralGauges(totals) {
-  const gaugeData = [
-    { id: 'gaugePublico', value: totals.publicoEE, total: totals.publicoEE, valueEl: 'gaugePublicoValue' },
-    { id: 'gaugeAEE', value: totals.estudantesAEE, total: totals.publicoEE || totals.estudantesAEE, valueEl: 'gaugeAEEValue' },
-    { id: 'gaugeEscolas', value: totals.escolas, total: totals.escolas, valueEl: 'gaugeEscolasValue' },
-    { id: 'gaugeEscolasAEE', value: totals.escolasAEE, total: totals.escolas || totals.escolasAEE, valueEl: 'gaugeEscolasAEEValue' },
-  ];
+  const studentPercent = totals.publicoEE ? Math.min(100, (totals.estudantesAEE / totals.publicoEE) * 100) : 0;
+  renderGauge('gaugeAEE', studentPercent);
+  const studentValue = document.getElementById('gaugeAEEValue');
+  if (studentValue)
+    studentValue.textContent = `${totals.estudantesAEE.toLocaleString('pt-BR')} de ${totals.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
 
-  gaugeData.forEach((item) => {
-    const percent = item.total ? Math.min(100, (item.value / item.total) * 100) : 0;
-    renderGauge(item.id, percent);
-    const valueEl = document.getElementById(item.valueEl);
-    if (valueEl) valueEl.textContent = `${item.value.toLocaleString('pt-BR')} (${percent.toFixed(1)}%)`;
-  });
+  const escolaPercent = totals.escolas ? Math.min(100, (totals.escolasAEE / totals.escolas) * 100) : 0;
+  renderGauge('gaugeEscolas', escolaPercent);
+  const escolaValue = document.getElementById('gaugeEscolasValue');
+  if (escolaValue)
+    escolaValue.textContent = `${totals.escolasAEE.toLocaleString('pt-BR')} de ${totals.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
 }
 
 function renderModalCharts(cre) {
@@ -252,19 +253,17 @@ function renderModalCharts(cre) {
     },
   });
 
-  const gaugeData = [
-    { id: 'creGaugePublico', value: cre.publicoEE, total: cre.publicoEE, valueEl: 'creGaugePublicoValue' },
-    { id: 'creGaugeAEE', value: cre.estudantesAEE, total: cre.publicoEE || cre.estudantesAEE, valueEl: 'creGaugeAEEValue' },
-    { id: 'creGaugeEscolas', value: cre.escolas, total: cre.escolas, valueEl: 'creGaugeEscolasValue' },
-    { id: 'creGaugeEscolasAEE', value: cre.escolasAEE, total: cre.escolas || cre.escolasAEE, valueEl: 'creGaugeEscolasAEEValue' },
-  ];
+  const studentPercent = cre.publicoEE ? Math.min(100, (cre.estudantesAEE / cre.publicoEE) * 100) : 0;
+  renderGauge('creGaugeAEE', studentPercent, modalGaugeCharts);
+  const studentVal = document.getElementById('creGaugeAEEValue');
+  if (studentVal)
+    studentVal.textContent = `${cre.estudantesAEE.toLocaleString('pt-BR')} de ${cre.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
 
-  gaugeData.forEach((item) => {
-    const percent = item.total ? Math.min(100, (item.value / item.total) * 100) : 0;
-    renderGauge(item.id, percent, modalGaugeCharts);
-    const valueEl = document.getElementById(item.valueEl);
-    if (valueEl) valueEl.textContent = `${item.value.toLocaleString('pt-BR')} (${percent.toFixed(1)}%)`;
-  });
+  const escolaPercent = cre.escolas ? Math.min(100, (cre.escolasAEE / cre.escolas) * 100) : 0;
+  renderGauge('creGaugeEscolas', escolaPercent, modalGaugeCharts);
+  const escolaVal = document.getElementById('creGaugeEscolasValue');
+  if (escolaVal)
+    escolaVal.textContent = `${cre.escolasAEE.toLocaleString('pt-BR')} de ${cre.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
 }
 
 function renderGauge(canvasId, percent, registry = gaugeCharts) {

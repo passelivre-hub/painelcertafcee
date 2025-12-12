@@ -43,27 +43,30 @@ body {
 .hero-title {
   text-align: center;
   display: grid;
-  gap: 0.2rem;
+  gap: 0.25rem;
   letter-spacing: 0.02em;
 }
 
 .hero-title h1 {
   margin: 0;
-  font-size: 1.9rem;
+  font-size: 2.15rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .hero-kicker {
   margin: 0;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  font-size: 1rem;
+  opacity: 0.92;
 }
 
 .hero-sub {
   margin: 0;
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: 500;
+  min-height: 0.2rem;
 }
 
 .hero-logos {
@@ -91,7 +94,7 @@ button,
   background: var(--green-700);
   color: #fff;
   border-radius: 10px;
-  padding: 0.65rem 1rem;
+  padding: 0.65rem 0.8rem;
   cursor: pointer;
   font-weight: 700;
   text-decoration: none;
@@ -109,12 +112,13 @@ button,
 
 .button-link .icon {
   display: inline-flex;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
+  font-size: 1.05rem;
 }
 
 button.secondary,
@@ -216,7 +220,7 @@ button.secondary,
   border-radius: 12px;
   padding: 0.75rem;
   background: #fdfefc;
-  min-height: 160px;
+  min-height: 140px;
 }
 
 .chart-card canvas {
@@ -246,6 +250,10 @@ button.secondary,
   gap: 0.5rem;
 }
 
+.gauge-row.two {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .gauge-item {
   background: var(--neutral-100);
   border: 1px solid var(--neutral-300);
@@ -257,8 +265,8 @@ button.secondary,
 }
 
 .gauge-item canvas {
-  width: 140px;
-  height: 90px;
+  width: 150px;
+  height: 95px;
 }
 
 .gauge-label {
@@ -353,7 +361,7 @@ button.secondary,
 }
 
 .chart-card.compact {
-  min-height: 140px;
+  min-height: 120px;
 }
 
 .gauge-block.compact .gauge-item {
