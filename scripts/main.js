@@ -1,157 +1,302 @@
-(async function initDashboard() {
-  const institutions = await loadInstitutions();
-  const customColumns = loadCustomColumns();
+const greenPalette = [
+  '#004b23', '#006400', '#228b22', '#2f7a4d', '#3aa76d', '#57c17b', '#7bd38d', '#a7e3b2', '#c7f2cf', '#e4f7e8'
+];
+const neutralGray = '#b8c2c4';
 
-  renderSummaryCards(institutions, customColumns);
-  renderTipoChart(institutions, customColumns);
-  renderRegiaoChart(institutions, customColumns);
-  renderMap(institutions, customColumns);
-})();
+let creData = [];
+let map;
+let municipalityToCre = {};
+let selectedCreCode = null;
+let modeChart;
+let modalModeChart;
+let modalEl;
+let gaugeCharts = {};
+let modalGaugeCharts = {};
 
-function renderSummaryCards(data, customColumns) {
-  const container = document.getElementById('summary-cards');
-  const totalCapacitacoes = data.reduce((total, item) => total + sumQuantities(item, customColumns), 0);
-  const totalInstituicoes = data.length;
-  const regioes = new Set(data.map((i) => i.Regiao));
+const normalizeName = (str) =>
+  (str || '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toUpperCase()
+    .trim();
 
+function init() {
+  creData = loadCreData();
+  renderHero();
+  setupTotals();
+  setupCharts();
+  setupModal();
+  initMap();
+}
+
+function renderHero() {
+  const heading = document.querySelector('#hero-title');
+  if (heading) {
+    const kicker = heading.querySelector('.hero-kicker');
+    if (kicker) kicker.textContent = 'SAEEX/NAEE - FCEE';
+    heading.querySelector('h1').textContent = 'Painel de Assessorias';
+    const subtitle = heading.querySelector('.hero-sub');
+    if (subtitle) subtitle.textContent = '';
+  }
+}
+
+function setupTotals() {
+  const totals = computeAggregates(creData);
+  const indicators = document.getElementById('general-indicators');
+  indicators.innerHTML = '';
   const cards = [
-    {
-      title: 'Total de Capacitações e Recursos',
-      value: totalCapacitacoes,
-      badge: `${totalInstituicoes} instituições ativas`,
-    },
-    {
-      title: 'Regiões atendidas',
-      value: regioes.size,
-      badge: 'Abrangência estadual',
-    },
-    {
-      title: 'Tipos cadastrados',
-      value: new Set(data.map((i) => i.Tipo)).size,
-      badge: 'Oficinas, Recursos de TA, Pedagógicos e Open Day',
-    },
+    { label: 'Público EE', value: totals.publicoEE.toLocaleString('pt-BR') },
+    { label: 'Escolas', value: totals.escolas.toLocaleString('pt-BR') },
+    { label: 'Escolas com AEE', value: totals.escolasAEE.toLocaleString('pt-BR') },
+    { label: 'Estudantes no AEE', value: totals.estudantesAEE.toLocaleString('pt-BR') },
+    { label: 'Participantes', value: totals.participantes.toLocaleString('pt-BR') },
   ];
+  cards.forEach((card) => {
+    const el = document.createElement('div');
+    el.className = 'stat-card';
+    el.innerHTML = `<span>${card.label}</span><strong>${card.value}</strong>`;
+    indicators.appendChild(el);
+  });
 
-  container.innerHTML = cards
-    .map(
-      (card) => `
-      <div class="card">
-        <h3>${card.title}</h3>
-        <p class="stat-value">${card.value}</p>
-        <span class="badge">${card.badge}</span>
-      </div>
-    `
-    )
-    .join('');
+  document.getElementById('totals-presencial').textContent = totals.presencial;
+  document.getElementById('totals-online').textContent = totals.online;
+
+  document.getElementById('impacto-profissionais').textContent = totals.participantes.toLocaleString('pt-BR');
+  document.getElementById('impacto-estudantes').textContent = totals.estudantesAEE.toLocaleString('pt-BR');
+
+  renderGeneralGauges(totals);
 }
 
-function renderTipoChart(data, customColumns) {
-  const totals = {
-    Oficinas: 0,
-    'Recursos de TA': 0,
-    'Recursos Pedagógicos': 0,
-    'Open Day': 0,
-  };
+function setupCharts() {
+  const totals = computeAggregates(creData);
+  const ctxMode = document.getElementById('modoChart').getContext('2d');
+  if (modeChart) modeChart.destroy();
+  modeChart = new Chart(ctxMode, {
+    type: 'doughnut',
+    data: {
+      labels: ['Presencial', 'Online'],
+      datasets: [{
+        data: [totals.presencial, totals.online],
+        backgroundColor: ['#0b7a3d', '#7ac29a'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } },
+      cutout: '60%'
+    },
+  });
+}
 
-  data.forEach((item) => {
-    totals['Oficinas'] += Number(item['Qt Oficinas'] || 0);
-    totals['Recursos de TA'] += Number(item['Qt Recurso de TA'] || 0);
-    totals['Recursos Pedagógicos'] += Number(item['Recursos Pedagogicos'] || 0);
-    totals['Open Day'] += Number(item['Open Day'] || 0);
-    customColumns.forEach((column) => {
-      totals[column] = (totals[column] || 0) + Number(item[column] || 0);
+function setupModal() {
+  modalEl = document.getElementById('cre-modal');
+  const closeBtn = document.getElementById('cre-modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeModal);
+  }
+  if (modalEl) {
+    modalEl.addEventListener('click', (e) => {
+      if (e.target === modalEl) closeModal();
     });
-  });
-
-  const ctx = document.getElementById('tipoChart');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(totals),
-      datasets: [
-        {
-          label: 'Número de Capacitações e Recursos',
-          data: Object.values(totals),
-          backgroundColor: '#00a0df',
-          borderRadius: 8,
-        },
-      ],
-    },
-    options: {
-      plugins: {
-        legend: { display: false },
-      },
-      scales: {
-        y: { beginAtZero: true },
-      },
-    },
-  });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  }
 }
 
-function renderRegiaoChart(data, customColumns) {
-  const totals = {};
-  data.forEach((item) => {
-    const regiao = item.Regiao || 'Não informado';
-    totals[regiao] = (totals[regiao] || 0) + sumQuantities(item, customColumns);
-  });
-
-  const ctx = document.getElementById('regiaoChart');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(totals),
-      datasets: [
-        {
-          label: 'Número de Capacitações e Recursos',
-          data: Object.values(totals),
-          backgroundColor: '#f59e0b',
-          borderRadius: 8,
-        },
-      ],
-    },
-    options: {
-      plugins: {
-        legend: { display: false },
-      },
-      scales: {
-        y: { beginAtZero: true },
-      },
-    },
-  });
-}
-
-function renderMap(data, customColumns) {
-  const map = L.map('map').setView([-27.2423, -50.2189], 6.7);
+function initMap() {
+  map = L.map('map').setView([-27.3, -50.9], 7);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
+    attribution: '&copy; OpenStreetMap',
+    minZoom: 6,
+    maxZoom: 12,
   }).addTo(map);
 
-  let atendidos = 0;
-  data.forEach((item) => {
-    const total = sumQuantities(item, customColumns);
-    const coords = MUNICIPIO_COORDS[item.Municipio];
-    if (coords && total > 0) {
-      atendidos += 1;
-      const popup = `
-        <strong>${item.Municipio}</strong><br/>
-        Instituição: ${item['Nome Inst.']}<br/>
-        Tipo: ${item.Tipo}<br/>
-        Endereço: ${item.Endereco}<br/>
-        Telefone: ${item.Telefone}<br/>
-        E-mail: ${item['E-mail']}<br/>
-        Total de Capacitações e Recursos: ${total}
-      `;
-      L.circleMarker(coords, {
-        radius: 10,
-        color: '#005cb9',
-        fillColor: '#00a0df',
-        fillOpacity: 0.8,
-      })
-        .addTo(map)
-        .bindPopup(popup);
+  const mapStatus = document.getElementById('map-status');
+  if (mapStatus) mapStatus.textContent = 'Carregando municípios...';
+
+  fetch('sc_municipios.geojson')
+    .then((res) => res.json())
+    .then((geojson) => {
+      municipalityToCre = buildMunicipalityIndex();
+
+      const layer = L.geoJSON(geojson, {
+        style: featureStyle,
+        onEachFeature: attachFeatureEvents,
+      });
+      layer.addTo(map);
+      if (mapStatus) mapStatus.textContent = 'Mapa pronto. Clique em um município para abrir a CRE.';
+      setTimeout(() => map.invalidateSize(), 100);
+    })
+    .catch((err) => {
+      console.error('Erro ao carregar mapa', err);
+      if (mapStatus) mapStatus.textContent = 'Não foi possível carregar o mapa. Recarregue a página ou verifique a conexão.';
+    });
+}
+
+function featureStyle(feature) {
+  const creCode =
+    municipalityToCre[feature.properties.name] || municipalityToCre[normalizeName(feature.properties.name)];
+  const cre = creData.find((c) => c.code === creCode);
+  const baseColor =
+    cre && cre.hasAssessoria ? greenPalette[cre.colorIndex % greenPalette.length] : neutralGray;
+  return {
+    color: '#ffffff',
+    weight: 0.5,
+    fillColor: baseColor,
+    fillOpacity: 0.85,
+  };
+}
+
+function attachFeatureEvents(feature, layer) {
+  layer.on({
+    mouseover: (e) => highlightFeature(e, feature),
+    mouseout: (e) => resetHighlight(e, feature),
+    click: () => selectCre(feature.properties.name),
+  });
+}
+
+function highlightFeature(e, feature) {
+  const creCode =
+    municipalityToCre[feature.properties.name] || municipalityToCre[normalizeName(feature.properties.name)];
+  const cre = creData.find((c) => c.code === creCode);
+  e.target.setStyle({ weight: 2, color: '#0b7a3d' });
+  const tip = document.getElementById('map-tooltip');
+  tip.innerHTML = `<strong>${feature.properties.name}</strong><br>${cre ? cre.name : ''}`;
+}
+
+function resetHighlight(e, feature) {
+  e.target.setStyle({ weight: 0.5, color: '#ffffff' });
+  const tip = document.getElementById('map-tooltip');
+  tip.textContent = 'Passe o mouse para ver o município e clique para abrir a CRE';
+}
+
+function selectCre(municipioName) {
+  const creCode = municipalityToCre[municipioName] || municipalityToCre[normalizeName(municipioName)];
+  selectedCreCode = creCode;
+  const cre = creData.find((c) => c.code === creCode);
+  if (!cre) return;
+  renderCreDetail(cre, municipioName);
+}
+
+function buildMunicipalityIndex() {
+  const index = {};
+  const creLookup = {};
+  creData.forEach((cre) => {
+    const creName = cre.regionName || cre.name.replace(/^CRE\s*/i, '');
+    creLookup[normalizeName(creName)] = cre.code;
+  });
+
+  Object.entries(MUNICIPALITY_CRE_MAP).forEach(([municipio, creName]) => {
+    const code = creLookup[normalizeName(creName)];
+    if (code) {
+      index[municipio] = code;
+      index[normalizeName(municipio)] = code;
     }
   });
 
-  const badge = document.getElementById('mapaBadge');
-  badge.textContent = atendidos > 0 ? `${atendidos} municípios com atendimentos` : 'Sem registros preenchidos';
+  return index;
 }
+
+function renderCreDetail(cre, municipioName) {
+  const container = document.getElementById('cre-modal');
+  const coverage = calculateCoverage(cre);
+  container.querySelector('.cre-title').textContent = `${cre.name}`;
+  container.querySelector('.cre-subtitle').textContent = `Município selecionado: ${municipioName}`;
+  container.querySelector('[data-field="publico-ee"]').textContent = cre.publicoEE.toLocaleString('pt-BR');
+  container.querySelector('[data-field="escolas"]').textContent = cre.escolas;
+  container.querySelector('[data-field="escolas-aee"]').textContent = cre.escolasAEE;
+  container.querySelector('[data-field="estudantes-aee"]').textContent = cre.estudantesAEE;
+  container.querySelector('[data-field="participantes"]').textContent = cre.participantes;
+  container.querySelector('[data-field="presencial"]').textContent = cre.presencial;
+  container.querySelector('[data-field="online"]').textContent = cre.online;
+  container.querySelector('[data-field="faltantes"]').textContent = `${coverage.faltantesAEE} (${coverage.percForaAEE.toFixed(1)}%)`;
+  container.querySelector('[data-field="escolas-sem-aee"]').textContent = `${coverage.escolasSemAEE} (${coverage.percEscolasSemAEE.toFixed(1)}%)`;
+  container.classList.add('active');
+
+  if (modalEl) {
+    modalEl.classList.add('open');
+  }
+
+  renderModalCharts(cre);
+}
+
+function closeModal() {
+  if (modalEl) {
+    modalEl.classList.remove('open');
+    modalEl.classList.remove('active');
+  }
+}
+
+function renderGeneralGauges(totals) {
+  const studentPercent = totals.publicoEE ? Math.min(100, (totals.estudantesAEE / totals.publicoEE) * 100) : 0;
+  renderGauge('gaugeAEE', studentPercent);
+  const studentValue = document.getElementById('gaugeAEEValue');
+  if (studentValue)
+    studentValue.textContent = `${totals.estudantesAEE.toLocaleString('pt-BR')} de ${totals.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
+
+  const escolaPercent = totals.escolas ? Math.min(100, (totals.escolasAEE / totals.escolas) * 100) : 0;
+  renderGauge('gaugeEscolas', escolaPercent);
+  const escolaValue = document.getElementById('gaugeEscolasValue');
+  if (escolaValue)
+    escolaValue.textContent = `${totals.escolasAEE.toLocaleString('pt-BR')} de ${totals.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
+}
+
+function renderModalCharts(cre) {
+  const modoCtx = document.getElementById('creModoChart').getContext('2d');
+  if (modalModeChart) modalModeChart.destroy();
+  modalModeChart = new Chart(modoCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Presencial', 'Online'],
+      datasets: [{
+        data: [cre.presencial, cre.online],
+        backgroundColor: ['#0b7a3d', '#7ac29a'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } },
+      cutout: '60%',
+    },
+  });
+
+  const studentPercent = cre.publicoEE ? Math.min(100, (cre.estudantesAEE / cre.publicoEE) * 100) : 0;
+  renderGauge('creGaugeAEE', studentPercent, modalGaugeCharts);
+  const studentVal = document.getElementById('creGaugeAEEValue');
+  if (studentVal)
+    studentVal.textContent = `${cre.estudantesAEE.toLocaleString('pt-BR')} de ${cre.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
+
+  const escolaPercent = cre.escolas ? Math.min(100, (cre.escolasAEE / cre.escolas) * 100) : 0;
+  renderGauge('creGaugeEscolas', escolaPercent, modalGaugeCharts);
+  const escolaVal = document.getElementById('creGaugeEscolasValue');
+  if (escolaVal)
+    escolaVal.textContent = `${cre.escolasAEE.toLocaleString('pt-BR')} de ${cre.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
+}
+
+function renderGauge(canvasId, percent, registry = gaugeCharts) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (registry[canvasId]) registry[canvasId].destroy();
+  registry[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [
+        {
+          data: [percent, 100 - percent],
+          backgroundColor: ['#0b7a3d', '#e6f3e6'],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      rotation: -90,
+      circumference: 180,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      cutout: '70%',
+    },
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
