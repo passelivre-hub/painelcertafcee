@@ -25,19 +25,38 @@ body {
   background: var(--neutral-100);
   color: var(--text);
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .hero {
+  position: relative;
   display: grid;
-  grid-template-columns: 1fr 1.2fr 0.7fr;
+  grid-template-columns: 1fr 1.1fr 0.6fr;
   align-items: center;
   gap: 1rem;
-  padding: 1.25rem 2rem;
-  background: radial-gradient(circle at 10% 20%, rgba(87, 193, 123, 0.18), transparent 35%),
-    radial-gradient(circle at 90% 20%, rgba(31, 143, 77, 0.18), transparent 30%),
-    linear-gradient(110deg, var(--green-900) 0%, var(--green-700) 45%, var(--green-600) 100%);
+  padding: 1.5rem 2rem 1.75rem;
+  background: linear-gradient(130deg, var(--green-900) 0%, var(--green-700) 40%, var(--green-600) 100%);
   color: var(--white);
+  overflow: hidden;
+}
+
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero::before {
+  background: radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.12), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.18), transparent 32%);
+  opacity: 0.9;
+}
+
+.hero::after {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 45%);
+  mix-blend-mode: screen;
 }
 
 .hero-title {
@@ -45,6 +64,7 @@ body {
   display: grid;
   gap: 0.25rem;
   letter-spacing: 0.02em;
+  z-index: 1;
 }
 
 .hero-title h1 {
@@ -73,6 +93,7 @@ body {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  z-index: 1;
 }
 
 .logo-img {
@@ -86,6 +107,7 @@ body {
 
 .hero-actions {
   text-align: right;
+  z-index: 1;
 }
 
 button,
@@ -133,8 +155,8 @@ button.secondary,
   display: grid;
   grid-template-columns: 70% 30%;
   gap: 1rem;
-  padding: 1rem 1.5rem 1.25rem;
-  height: calc(100vh - 180px);
+  padding: 0.75rem 1.5rem 1rem;
+  height: calc(100vh - 170px);
 }
 
 .map-panel,
@@ -142,7 +164,7 @@ button.secondary,
   background: var(--white);
   border: 1px solid var(--neutral-300);
   border-radius: 16px;
-  padding: 0.9rem;
+  padding: 0.8rem;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04);
   height: 100%;
   display: flex;
@@ -150,7 +172,8 @@ button.secondary,
 }
 
 .info-panel {
-  overflow: auto;
+  overflow: hidden;
+  gap: 0.5rem;
 }
 
 .panel-heading {
@@ -171,10 +194,17 @@ button.secondary,
 }
 
 #map {
-  height: 100%;
-  min-height: 480px;
+  height: calc(100% - 26px);
+  min-height: 420px;
   border-radius: 12px;
   border: 1px solid var(--neutral-300);
+}
+
+.map-status {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  min-height: 1.1rem;
 }
 
 .map-tooltip {
@@ -280,10 +310,10 @@ button.secondary,
 
 .impact-block {
   border: 1px solid var(--neutral-300);
-  border-radius: 12px;
-  padding: 0.75rem;
+  border-radius: 14px;
+  padding: 0.65rem 0.75rem;
   background: #fff;
-  margin-top: 0.6rem;
+  margin-top: 0.4rem;
 }
 
 .impact-row {
@@ -295,14 +325,14 @@ button.secondary,
 .impact-card {
   background: var(--neutral-100);
   border: 1px solid var(--neutral-300);
-  border-radius: 12px;
-  padding: 0.7rem;
+  border-radius: 10px;
+  padding: 0.7rem 0.75rem;
   display: grid;
   gap: 0.15rem;
 }
 
 .impact-card strong {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: var(--green-900);
 }
 

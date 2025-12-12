@@ -112,6 +112,9 @@ function initMap() {
     maxZoom: 12,
   }).addTo(map);
 
+  const mapStatus = document.getElementById('map-status');
+  if (mapStatus) mapStatus.textContent = 'Carregando municípios...';
+
   fetch('sc_municipios.geojson')
     .then((res) => res.json())
     .then((geojson) => {
@@ -122,6 +125,12 @@ function initMap() {
         onEachFeature: attachFeatureEvents,
       });
       layer.addTo(map);
+      if (mapStatus) mapStatus.textContent = 'Mapa pronto. Clique em um município para abrir a CRE.';
+      setTimeout(() => map.invalidateSize(), 100);
+    })
+    .catch((err) => {
+      console.error('Erro ao carregar mapa', err);
+      if (mapStatus) mapStatus.textContent = 'Não foi possível carregar o mapa. Recarregue a página ou verifique a conexão.';
     });
 }
 
@@ -185,7 +194,6 @@ function buildMunicipalityIndex() {
       index[normalizeName(municipio)] = code;
     }
   });
-}
 
   return index;
 }
