@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Estatístico CERTA - FCEE</title>
+  <link rel="stylesheet" href="styles/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-logos">
+      <!-- Se você tiver logos no repositório, ajuste os caminhos abaixo -->
+      <!-- <img class="logo-img" src="img/logo_fcee.png" alt="FCEE" /> -->
+      <!-- <img class="logo-img" src="img/logo_gov_sc.png" alt="GovSC" /> -->
+    </div>
+
+    <div class="hero-title">
+      <h1>Painel Estatístico CERTA - FCEE</h1>
+      <p>Centro de Referência em Tecnologia Assistiva</p>
+    </div>
+
+    <div class="hero-actions"></div>
+  </header>
+
+  <main class="main-content">
+    <section class="kpi-row">
+      <article class="kpi-card">
+        <div class="kpi-label">Total de ações</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">Capacitações e recursos contabilizados</div>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-label">Centros FCEE</div>
+        <div class="kpi-value" id="kpi-centros">—</div>
+        <div class="kpi-sub">Ações realizadas nos centros/serviços</div>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-label">Diversas regiões</div>
+        <div class="kpi-value" id="kpi-regioes">—</div>
+        <div class="kpi-sub">Ações realizadas em diferentes regiões do estado</div>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-label">Proporção em Centros</div>
+        <div class="kpi-value" id="kpi-prop-centros">—</div>
+        <div class="kpi-sub">Percentual do total</div>
+      </article>
+    </section>
+
+    <section class="grid-row">
+      <article class="card">
+        <h2>Número de Capacitações e Recursos por Tipo</h2>
+        <div class="chart-container"><canvas id="chart-tipos-stacked"></canvas></div>
+        <div class="chart-note">Barras empilhadas: Centros FCEE vs Diversas regiões do estado.</div>
+      </article>
+
+      <article class="card">
+        <h2>Totais por Tipo</h2>
+        <div class="chart-container"><canvas id="chart-tipos-totais"></canvas></div>
+        <div class="chart-note">Valores totais por tipo (barras verticais).</div>
+      </article>
+
+      <article class="card">
+        <h2>Centros FCEE x Diversas Regiões do Estado</h2>
+        <div class="chart-container"><canvas id="chart-locais"></canvas></div>
+        <div class="chart-note">Consolidado geral por local de realização.</div>
+      </article>
+
+      <article class="card">
+        <h2>Percentual em Centros por Tipo</h2>
+        <div class="chart-container"><canvas id="chart-percent-centros"></canvas></div>
+        <div class="chart-note">Quanto de cada tipo aconteceu nos centros/serviços.</div>
+      </article>
+    </section>
+  </main>
+
+  <script src="scripts/shared-data.js"></script>
+  <script src="scripts/certa-data.js"></script>
+  <script src="scripts/main.js"></script>
+</body>
+</html>
