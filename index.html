@@ -3,50 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Estatístico - FCEE CERTA</title>
+  <title>Painel Estatisco CERTA - FCEE</title>
   <link rel="stylesheet" href="styles/style.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-VtZmZyyi8GqL2QiaJeem2E7CqcB1RIM5qQgpR5p8+3g=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j7kGEXG1F2sxv9RHDVibfQh0F/vofpF6DkPp5l0=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <header>
-    <div class="titles">
-      <h1>Painel Estatístico</h1>
-      <h2>Fundação Catarinense de Educação Especial · Capacitações e Recursos</h2>
+  <header class="hero">
+    <div class="hero-logos">
+      <img src="govsc.svg" alt="Logo Governo de SC" class="logo-img">
+      <img src="fcee.svg" alt="Logo FCEE" class="logo-img">
     </div>
-    <div class="logos">
-      <img src="govsc.jpg" alt="Logo GOVSC" class="logo-img">
-      <img src="fcee.jpg" alt="Logo FCEE" class="logo-img">
+    <div class="hero-title">
+      <h1>Painel Estatisco CERTA - FCEE</h1>
+      <p>Centro de referência de tecnologia assistiva</p>
+    </div>
+    <div class="hero-actions">
+      <a class="button-link icon-only" href="admin.html" aria-label="Painel Administrativo">
+        <span class="icon">⚙</span>
+      </a>
     </div>
   </header>
 
-  <main>
-    <div class="section-title">
-      <h2>Resumo das Capacitações e Recursos</h2>
-      <a class="button-link" href="admin.html">Ir para Painel Admin</a>
-    </div>
-
-    <div class="card-grid" id="summary-cards"></div>
-
-    <div class="card-grid" style="margin-top: 1rem;">
-      <div class="chart-container">
-        <h3>Número de Capacitações e Recursos por Tipo</h3>
-        <canvas id="tipoChart" height="140"></canvas>
+  <main class="main-content">
+    <section class="top-row">
+      <div class="card">
+        <h2>Número de Capacitações e Recursos por Tipo</h2>
+        <div class="chart-container">
+          <canvas id="chart-tipos"></canvas>
+        </div>
       </div>
-      <div class="chart-container">
-        <h3>Capacitações e Recursos por Região</h3>
-        <canvas id="regiaoChart" height="140"></canvas>
+      <div class="card">
+        <h2>Capacitações e Recursos por Região</h2>
+        <div class="chart-container">
+          <canvas id="chart-regioes"></canvas>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="section-title" style="margin-top: 1.5rem;">
-      <h2>Mapa de Municípios Atendidos</h2>
-      <span class="badge" id="mapaBadge">Carregando...</span>
-    </div>
-    <div id="map"></div>
+    <section class="map-row">
+      <div class="map-header">
+        <h2>Mapa de Santa Catarina</h2>
+        <div class="map-tooltip">Passe o mouse para ver o município<br>e clique para abrir os dados.</div>
+      </div>
+      <div id="map"></div>
+    </section>
   </main>
 
+  <script src="scripts/certa-data.js"></script>
   <script src="scripts/shared-data.js"></script>
   <script src="scripts/main.js"></script>
 </body>
