@@ -1,64 +1,75 @@
-const STORAGE_KEY = 'certa-institutions';
-const CUSTOM_COLUMNS_KEY = 'certa-custom-columns';
-const DEFAULT_TYPES = ['Todos', 'Oficinas', 'Recursos de TA', 'Recursos Pedagógicos', 'Open Day'];
-const QUANTITY_FIELDS = ['Qt Oficinas', 'Qt Recurso de TA', 'Recursos Pedagogicos', 'Open Day'];
+const CRE_STORAGE_KEY = 'naee-cre-metrics-v1';
 
-const MUNICIPIO_COORDS = {
-  'Florianópolis': [-27.5954, -48.5480],
-  'Joinville': [-26.3044, -48.8487],
-  'Chapecó': [-27.1004, -52.6152],
-  'Blumenau': [-26.9155, -49.0709],
-  'Criciúma': [-28.6775, -49.3697],
-};
-
-async function fetchCsvData() {
-  const response = await fetch('data/instituicoes.csv');
-  const text = await response.text();
-  return parseCsv(text);
-}
-
-function parseCsv(text) {
-  const [headerLine, ...rows] = text.trim().split(/\r?\n/);
-  const headers = headerLine.split(',');
-  return rows.map((row) => {
-    const values = row.split(',');
-    return headers.reduce((acc, header, idx) => {
-      acc[header.trim()] = (values[idx] || '').trim();
-      return acc;
-    }, {});
+function normalizeCreRecords(list) {
+  return list.map((cre, index) => {
+    const regionName = cre.regionName || (cre.name || '').replace(/^CRE\s*\d+\s*-\s*/i, '').replace(/^CRE\s*/i, '').trim();
+    const name = `CRE ${regionName}`.trim();
+    const code = cre.code || `CRE${String(index + 1).padStart(2, '0')}`;
+    return {
+      ...cre,
+      code,
+      name,
+      regionName,
+    };
   });
 }
 
-async function loadInstitutions() {
-  const persisted = localStorage.getItem(STORAGE_KEY);
-  if (persisted) {
-    return JSON.parse(persisted);
+function loadCreData() {
+  const stored = localStorage.getItem(CRE_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length === DEFAULT_CRE_DATA.length) {
+        const normalized = normalizeCreRecords(parsed);
+        localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(normalized));
+        return normalized;
+      }
+    } catch (err) {
+      console.warn('Falha ao ler armazenamento local, usando padrão', err);
+    }
   }
-  const initial = await fetchCsvData();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-  return initial;
+  const normalizedDefault = normalizeCreRecords(DEFAULT_CRE_DATA);
+  localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(normalizedDefault));
+  return [...normalizedDefault];
 }
 
-function saveInstitutions(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function saveCreData(data) {
+  localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(data));
 }
 
-function loadCustomColumns() {
-  const persisted = localStorage.getItem(CUSTOM_COLUMNS_KEY);
-  if (persisted) {
-    return JSON.parse(persisted);
-  }
-  const defaults = [];
-  localStorage.setItem(CUSTOM_COLUMNS_KEY, JSON.stringify(defaults));
-  return defaults;
+function computeAggregates(creList) {
+  return creList.reduce(
+    (acc, cre) => {
+      acc.publicoEE += cre.publicoEE;
+      acc.escolas += cre.escolas;
+      acc.escolasAEE += cre.escolasAEE;
+      acc.estudantesAEE += cre.estudantesAEE;
+      acc.participantes += cre.participantes;
+      acc.presencial += cre.presencial;
+      acc.online += cre.online;
+      return acc;
+    },
+    {
+      publicoEE: 0,
+      escolas: 0,
+      escolasAEE: 0,
+      estudantesAEE: 0,
+      participantes: 0,
+      presencial: 0,
+      online: 0,
+    }
+  );
 }
 
-function saveCustomColumns(columns) {
-  localStorage.setItem(CUSTOM_COLUMNS_KEY, JSON.stringify(columns));
-}
-
-function sumQuantities(entry, customColumns) {
-  const baseTotal = QUANTITY_FIELDS.reduce((total, field) => total + Number(entry[field] || 0), 0);
-  const customTotal = customColumns.reduce((total, column) => total + Number(entry[column] || 0), 0);
-  return baseTotal + customTotal;
+function calculateCoverage(cre) {
+  const faltantesAEE = Math.max(cre.publicoEE - cre.estudantesAEE, 0);
+  const percForaAEE = cre.publicoEE === 0 ? 0 : (faltantesAEE / cre.publicoEE) * 100;
+  const escolasSemAEE = Math.max(cre.escolas - cre.escolasAEE, 0);
+  const percEscolasSemAEE = cre.escolas === 0 ? 0 : (escolasSemAEE / cre.escolas) * 100;
+  return {
+    faltantesAEE,
+    percForaAEE,
+    escolasSemAEE,
+    percEscolasSemAEE,
+  };
 }
