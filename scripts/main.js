@@ -185,6 +185,7 @@ function buildMunicipalityIndex() {
       index[normalizeName(municipio)] = code;
     }
   });
+}
 
   return index;
 }
