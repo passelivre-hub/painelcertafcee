@@ -1,157 +1,157 @@
-(async function initDashboard() {
-  const institutions = await loadInstitutions();
-  const customColumns = loadCustomColumns();
+let tipoChart;
+let regiaoChart;
+let mapa;
+let geoLayer;
+let dados = [];
 
-  renderSummaryCards(institutions, customColumns);
-  renderTipoChart(institutions, customColumns);
-  renderRegiaoChart(institutions, customColumns);
-  renderMap(institutions, customColumns);
-})();
-
-function renderSummaryCards(data, customColumns) {
-  const container = document.getElementById('summary-cards');
-  const totalCapacitacoes = data.reduce((total, item) => total + sumQuantities(item, customColumns), 0);
-  const totalInstituicoes = data.length;
-  const regioes = new Set(data.map((i) => i.Regiao));
-
-  const cards = [
-    {
-      title: 'Total de Capacitações e Recursos',
-      value: totalCapacitacoes,
-      badge: `${totalInstituicoes} instituições ativas`,
-    },
-    {
-      title: 'Regiões atendidas',
-      value: regioes.size,
-      badge: 'Abrangência estadual',
-    },
-    {
-      title: 'Tipos cadastrados',
-      value: new Set(data.map((i) => i.Tipo)).size,
-      badge: 'Oficinas, Recursos de TA, Pedagógicos e Open Day',
-    },
-  ];
-
-  container.innerHTML = cards
-    .map(
-      (card) => `
-      <div class="card">
-        <h3>${card.title}</h3>
-        <p class="stat-value">${card.value}</p>
-        <span class="badge">${card.badge}</span>
-      </div>
-    `
-    )
-    .join('');
+function init() {
+  dados = certaData.loadData();
+  renderCharts();
+  initMap();
 }
 
-function renderTipoChart(data, customColumns) {
-  const totals = {
-    Oficinas: 0,
-    'Recursos de TA': 0,
-    'Recursos Pedagógicos': 0,
-    'Open Day': 0,
-  };
+function renderCharts() {
+  const totals = certaData.aggregateByTipo(dados);
+  const regiaoTotals = certaData.aggregateByRegiao(dados);
 
-  data.forEach((item) => {
-    totals['Oficinas'] += Number(item['Qt Oficinas'] || 0);
-    totals['Recursos de TA'] += Number(item['Qt Recurso de TA'] || 0);
-    totals['Recursos Pedagógicos'] += Number(item['Recursos Pedagogicos'] || 0);
-    totals['Open Day'] += Number(item['Open Day'] || 0);
-    customColumns.forEach((column) => {
-      totals[column] = (totals[column] || 0) + Number(item[column] || 0);
-    });
-  });
+  const tipoCtx = document.getElementById('chart-tipos');
+  const regiaoCtx = document.getElementById('chart-regioes');
 
-  const ctx = document.getElementById('tipoChart');
-  new Chart(ctx, {
+  const tipoData = [totals.oficinas, totals.recursoTA, totals.recursosPedagogicos, totals.openDay];
+  const labelsTipo = ['Oficinas', 'Recursos de TA', 'Recursos Pedagógicos', 'Open Day'];
+
+  const regiaoData = REGIOES.map((reg) => regiaoTotals[reg] || 0);
+
+  if (tipoChart) tipoChart.destroy();
+  if (regiaoChart) regiaoChart.destroy();
+
+  tipoChart = new Chart(tipoCtx, {
     type: 'bar',
     data: {
-      labels: Object.keys(totals),
+      labels: labelsTipo,
       datasets: [
         {
-          label: 'Número de Capacitações e Recursos',
-          data: Object.values(totals),
-          backgroundColor: '#00a0df',
+          label: 'Quantidade',
+          data: tipoData,
+          backgroundColor: ['#c60c2f', '#d63c55', '#e46a7d', '#f49ca9'],
           borderRadius: 8,
         },
       ],
     },
     options: {
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
+        tooltip: { enabled: true },
       },
       scales: {
-        y: { beginAtZero: true },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#34424a' },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#6c7a82' },
+          grid: { color: '#d7dfe3' },
+        },
       },
     },
   });
-}
 
-function renderRegiaoChart(data, customColumns) {
-  const totals = {};
-  data.forEach((item) => {
-    const regiao = item.Regiao || 'Não informado';
-    totals[regiao] = (totals[regiao] || 0) + sumQuantities(item, customColumns);
-  });
-
-  const ctx = document.getElementById('regiaoChart');
-  new Chart(ctx, {
+  regiaoChart = new Chart(regiaoCtx, {
     type: 'bar',
     data: {
-      labels: Object.keys(totals),
+      labels: REGIOES,
       datasets: [
         {
-          label: 'Número de Capacitações e Recursos',
-          data: Object.values(totals),
-          backgroundColor: '#f59e0b',
+          label: 'Total',
+          data: regiaoData,
+          backgroundColor: '#c60c2f',
           borderRadius: 8,
         },
       ],
     },
     options: {
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
+        tooltip: { enabled: true },
       },
       scales: {
-        y: { beginAtZero: true },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#34424a' },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#6c7a82' },
+          grid: { color: '#d7dfe3' },
+        },
       },
     },
   });
 }
 
-function renderMap(data, customColumns) {
-  const map = L.map('map').setView([-27.2423, -50.2189], 6.7);
+function initMap() {
+  mapa = L.map('map').setView([-27.1, -50.9], 7);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-  }).addTo(map);
+    maxZoom: 12,
+    attribution: '&copy; OpenStreetMap',
+  }).addTo(mapa);
 
-  let atendidos = 0;
-  data.forEach((item) => {
-    const total = sumQuantities(item, customColumns);
-    const coords = MUNICIPIO_COORDS[item.Municipio];
-    if (coords && total > 0) {
-      atendidos += 1;
-      const popup = `
-        <strong>${item.Municipio}</strong><br/>
-        Instituição: ${item['Nome Inst.']}<br/>
-        Tipo: ${item.Tipo}<br/>
-        Endereço: ${item.Endereco}<br/>
-        Telefone: ${item.Telefone}<br/>
-        E-mail: ${item['E-mail']}<br/>
-        Total de Capacitações e Recursos: ${total}
-      `;
-      L.circleMarker(coords, {
-        radius: 10,
-        color: '#005cb9',
-        fillColor: '#00a0df',
-        fillOpacity: 0.8,
-      })
-        .addTo(map)
-        .bindPopup(popup);
-    }
-  });
-
-  const badge = document.getElementById('mapaBadge');
-  badge.textContent = atendidos > 0 ? `${atendidos} municípios com atendimentos` : 'Sem registros preenchidos';
+  fetch('sc_municipios.geojson')
+    .then((res) => res.json())
+    .then((geojson) => {
+      geoLayer = L.geoJSON(geojson, {
+        style: estiloMunicipio,
+        onEachFeature,
+      }).addTo(mapa);
+    })
+    .catch((err) => console.error('Erro ao carregar mapa', err));
 }
+
+function hasAtendimento(nome) {
+  const totais = certaData.aggregateMunicipios(dados);
+  const info = totais[nome];
+  if (!info) return false;
+  return info.oficinas + info.recursoTA + info.recursosPedagogicos + info.openDay > 0;
+}
+
+function estiloMunicipio(feature) {
+  const nome = feature.properties.name;
+  const ativo = hasAtendimento(nome);
+  return {
+    weight: 0.8,
+    color: '#ffffff',
+    fillColor: ativo ? '#c60c2f' : '#c2c2c2',
+    fillOpacity: ativo ? 0.65 : 0.35,
+  };
+}
+
+function onEachFeature(feature, layer) {
+  const nome = feature.properties.name;
+  layer.on({
+    click: () => abrirPopup(nome, layer),
+  });
+  layer.bindTooltip(nome, { sticky: true, direction: 'top' });
+}
+
+function abrirPopup(municipio, layer) {
+  const instituicoes = certaData.getInstituicoesPorMunicipio(municipio, dados);
+  if (!instituicoes.length) {
+    layer.bindPopup(`<div class="popup"><h4>${municipio}</h4><p>Sem instituições cadastradas.</p></div>`).openPopup();
+    return;
+  }
+
+  const lista = instituicoes
+    .map((inst) => {
+      return `<li><strong>${inst.instituicao}</strong><br>Oficinas: ${inst.oficinas} · Recursos TA: ${inst.recursoTA}<br>Recursos Pedagógicos: ${inst.recursosPedagogicos} · Open Day: ${inst.openDay}</li>`;
+    })
+    .join('');
+
+  const html = `<div class="popup"><h4>${municipio}</h4><ul>${lista}</ul></div>`;
+  layer.bindPopup(html).openPopup();
+}
+
+document.addEventListener('DOMContentLoaded', init);

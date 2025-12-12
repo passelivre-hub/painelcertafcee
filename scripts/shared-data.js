@@ -1,64 +1,87 @@
-const STORAGE_KEY = 'certa-institutions';
-const CUSTOM_COLUMNS_KEY = 'certa-custom-columns';
-const DEFAULT_TYPES = ['Todos', 'Oficinas', 'Recursos de TA', 'Recursos Pedagógicos', 'Open Day'];
-const QUANTITY_FIELDS = ['Qt Oficinas', 'Qt Recurso de TA', 'Recursos Pedagogicos', 'Open Day'];
+const STORAGE_KEY = 'certa-data';
 
-const MUNICIPIO_COORDS = {
-  'Florianópolis': [-27.5954, -48.5480],
-  'Joinville': [-26.3044, -48.8487],
-  'Chapecó': [-27.1004, -52.6152],
-  'Blumenau': [-26.9155, -49.0709],
-  'Criciúma': [-28.6775, -49.3697],
-};
-
-async function fetchCsvData() {
-  const response = await fetch('data/instituicoes.csv');
-  const text = await response.text();
-  return parseCsv(text);
+function cloneData(data) {
+  return data.map((item) => ({ ...item }));
 }
 
-function parseCsv(text) {
-  const [headerLine, ...rows] = text.trim().split(/\r?\n/);
-  const headers = headerLine.split(',');
-  return rows.map((row) => {
-    const values = row.split(',');
-    return headers.reduce((acc, header, idx) => {
-      acc[header.trim()] = (values[idx] || '').trim();
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn('Não foi possível carregar dados salvos, usando padrão.', err);
+  }
+  return cloneData(CERTA_DEFAULT_DATA);
+}
+
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (err) {
+    console.warn('Não foi possível salvar os dados.', err);
+  }
+}
+
+function resetData() {
+  saveData(CERTA_DEFAULT_DATA);
+  return cloneData(CERTA_DEFAULT_DATA);
+}
+
+function aggregateByTipo(data) {
+  return data.reduce(
+    (acc, item) => {
+      acc.oficinas += Number(item.oficinas) || 0;
+      acc.recursoTA += Number(item.recursoTA) || 0;
+      acc.recursosPedagogicos += Number(item.recursosPedagogicos) || 0;
+      acc.openDay += Number(item.openDay) || 0;
       return acc;
-    }, {});
-  });
+    },
+    { oficinas: 0, recursoTA: 0, recursosPedagogicos: 0, openDay: 0 }
+  );
 }
 
-async function loadInstitutions() {
-  const persisted = localStorage.getItem(STORAGE_KEY);
-  if (persisted) {
-    return JSON.parse(persisted);
-  }
-  const initial = await fetchCsvData();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-  return initial;
+function aggregateByRegiao(data) {
+  const base = Object.fromEntries(REGIOES.map((reg) => [reg, 0]));
+  return data.reduce((acc, item) => {
+    const total = (Number(item.oficinas) || 0) + (Number(item.recursoTA) || 0) + (Number(item.recursosPedagogicos) || 0) + (Number(item.openDay) || 0);
+    acc[item.regiao] = (acc[item.regiao] || 0) + total;
+    return acc;
+  }, base);
 }
 
-function saveInstitutions(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function aggregateMunicipios(data) {
+  return data.reduce((acc, item) => {
+    const muni = item.municipio;
+    if (!acc[muni]) {
+      acc[muni] = {
+        municipio: muni,
+        regiao: item.regiao,
+        oficinas: 0,
+        recursoTA: 0,
+        recursosPedagogicos: 0,
+        openDay: 0,
+      };
+    }
+    acc[muni].oficinas += Number(item.oficinas) || 0;
+    acc[muni].recursoTA += Number(item.recursoTA) || 0;
+    acc[muni].recursosPedagogicos += Number(item.recursosPedagogicos) || 0;
+    acc[muni].openDay += Number(item.openDay) || 0;
+    return acc;
+  }, {});
 }
 
-function loadCustomColumns() {
-  const persisted = localStorage.getItem(CUSTOM_COLUMNS_KEY);
-  if (persisted) {
-    return JSON.parse(persisted);
-  }
-  const defaults = [];
-  localStorage.setItem(CUSTOM_COLUMNS_KEY, JSON.stringify(defaults));
-  return defaults;
+function getInstituicoesPorMunicipio(municipio, data) {
+  return data.filter((item) => item.municipio === municipio);
 }
 
-function saveCustomColumns(columns) {
-  localStorage.setItem(CUSTOM_COLUMNS_KEY, JSON.stringify(columns));
-}
-
-function sumQuantities(entry, customColumns) {
-  const baseTotal = QUANTITY_FIELDS.reduce((total, field) => total + Number(entry[field] || 0), 0);
-  const customTotal = customColumns.reduce((total, column) => total + Number(entry[column] || 0), 0);
-  return baseTotal + customTotal;
-}
+window.certaData = {
+  loadData,
+  saveData,
+  resetData,
+  aggregateByTipo,
+  aggregateByRegiao,
+  aggregateMunicipios,
+  getInstituicoesPorMunicipio,
+};
