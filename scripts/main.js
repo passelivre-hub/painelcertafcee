@@ -168,7 +168,7 @@ function highlightFeature(e, feature) {
 function resetHighlight(e, feature) {
   e.target.setStyle({ weight: 0.5, color: '#ffffff' });
   const tip = document.getElementById('map-tooltip');
-  tip.textContent = 'Passe o mouse para ver o município e clique para abrir a CRE';
+  tip.innerHTML = 'Passe o mouse para ver o município<br>e clique para abrir a CRE';
 }
 
 function selectCre(municipioName) {
@@ -203,10 +203,6 @@ function renderCreDetail(cre, municipioName) {
   const coverage = calculateCoverage(cre);
   container.querySelector('.cre-title').textContent = `${cre.name}`;
   container.querySelector('.cre-subtitle').textContent = `Município selecionado: ${municipioName}`;
-  container.querySelector('[data-field="publico-ee"]').textContent = cre.publicoEE.toLocaleString('pt-BR');
-  container.querySelector('[data-field="escolas"]').textContent = cre.escolas;
-  container.querySelector('[data-field="escolas-aee"]').textContent = cre.escolasAEE;
-  container.querySelector('[data-field="estudantes-aee"]').textContent = cre.estudantesAEE;
   container.querySelector('[data-field="participantes"]').textContent = cre.participantes;
   container.querySelector('[data-field="presencial"]').textContent = cre.presencial;
   container.querySelector('[data-field="online"]').textContent = cre.online;
@@ -230,13 +226,13 @@ function closeModal() {
 
 function renderGeneralGauges(totals) {
   const studentPercent = totals.publicoEE ? Math.min(100, (totals.estudantesAEE / totals.publicoEE) * 100) : 0;
-  renderGauge('gaugeAEE', studentPercent);
+  renderGauge('gaugeAEE', studentPercent, totals.estudantesAEE, totals.publicoEE);
   const studentValue = document.getElementById('gaugeAEEValue');
   if (studentValue)
     studentValue.textContent = `${totals.estudantesAEE.toLocaleString('pt-BR')} de ${totals.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
 
   const escolaPercent = totals.escolas ? Math.min(100, (totals.escolasAEE / totals.escolas) * 100) : 0;
-  renderGauge('gaugeEscolas', escolaPercent);
+  renderGauge('gaugeEscolas', escolaPercent, totals.escolasAEE, totals.escolas);
   const escolaValue = document.getElementById('gaugeEscolasValue');
   if (escolaValue)
     escolaValue.textContent = `${totals.escolasAEE.toLocaleString('pt-BR')} de ${totals.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
@@ -262,19 +258,19 @@ function renderModalCharts(cre) {
   });
 
   const studentPercent = cre.publicoEE ? Math.min(100, (cre.estudantesAEE / cre.publicoEE) * 100) : 0;
-  renderGauge('creGaugeAEE', studentPercent, modalGaugeCharts);
+  renderGauge('creGaugeAEE', studentPercent, cre.estudantesAEE, cre.publicoEE, modalGaugeCharts);
   const studentVal = document.getElementById('creGaugeAEEValue');
   if (studentVal)
     studentVal.textContent = `${cre.estudantesAEE.toLocaleString('pt-BR')} de ${cre.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
 
   const escolaPercent = cre.escolas ? Math.min(100, (cre.escolasAEE / cre.escolas) * 100) : 0;
-  renderGauge('creGaugeEscolas', escolaPercent, modalGaugeCharts);
+  renderGauge('creGaugeEscolas', escolaPercent, cre.escolasAEE, cre.escolas, modalGaugeCharts);
   const escolaVal = document.getElementById('creGaugeEscolasValue');
   if (escolaVal)
     escolaVal.textContent = `${cre.escolasAEE.toLocaleString('pt-BR')} de ${cre.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
 }
 
-function renderGauge(canvasId, percent, registry = gaugeCharts) {
+function renderGauge(canvasId, percent, value, total, registry = gaugeCharts) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -285,6 +281,7 @@ function renderGauge(canvasId, percent, registry = gaugeCharts) {
       datasets: [
         {
           data: [percent, 100 - percent],
+          meta: { value, total, percent },
           backgroundColor: ['#0b7a3d', '#e6f3e6'],
           borderWidth: 0,
         },
@@ -293,7 +290,21 @@ function renderGauge(canvasId, percent, registry = gaugeCharts) {
     options: {
       rotation: -90,
       circumference: 180,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: (context) => {
+              const meta = context.dataset.meta;
+              if (!meta) return '';
+              const totalLabel = (meta.total ?? 0).toLocaleString('pt-BR');
+              const valueLabel = (meta.value ?? 0).toLocaleString('pt-BR');
+              return `${valueLabel} de ${totalLabel} (${(meta.percent ?? 0).toFixed(1)}%)`;
+            },
+          },
+        },
+      },
       cutout: '70%',
     },
   });

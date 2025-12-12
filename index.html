@@ -33,21 +33,19 @@
         <div>
           <h2>Mapa de Santa Catarina</h2>
         </div>
-        <div id="map-tooltip" class="map-tooltip">Passe o mouse para ver o município e clique para abrir a CRE</div>
+        <div id="map-tooltip" class="map-tooltip">Passe o mouse para ver o município<br>e clique para abrir a CRE</div>
       </div>
       <div id="map"></div>
       <div id="map-status" class="map-status"></div>
     </section>
 
     <section class="info-panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Panorama Geral</h2>
-        </div>
-      </div>
-      <div id="general-indicators" class="stat-grid"></div>
       <div class="gauge-block">
-        <div class="card-title">Cobertura</div>
+        <div class="panel-heading tight">
+          <div>
+            <h2>Panorama Geral</h2>
+          </div>
+        </div>
         <div class="gauge-row two">
           <div class="gauge-item">
             <span class="gauge-label">Público EE × Estudantes AEE</span>
@@ -74,6 +72,7 @@
           </div>
         </div>
       </div>
+      <div id="general-indicators" class="stat-grid"></div>
       <div class="charts-grid">
         <div class="chart-card compact">
           <div class="card-title">Modalidade das assessorias</div>
@@ -96,23 +95,27 @@
           <span class="badge">Detalhes completos da CRE</span>
         </div>
       </div>
+      <div class="modal-charts">
+        <div class="gauge-block compact">
+          <div class="gauge-row two">
+            <div class="gauge-item">
+              <span class="gauge-label">Público EE × Estudantes AEE</span>
+              <canvas id="creGaugeAEE"></canvas>
+              <div class="gauge-value" id="creGaugeAEEValue">-</div>
+            </div>
+            <div class="gauge-item">
+              <span class="gauge-label">Escolas × Escolas com AEE</span>
+              <canvas id="creGaugeEscolas"></canvas>
+              <div class="gauge-value" id="creGaugeEscolasValue">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card compact">
+          <div class="card-title">Modalidade das assessorias</div>
+          <canvas id="creModoChart"></canvas>
+        </div>
+      </div>
       <div class="detail-grid">
-        <div class="detail-card">
-          <span> Público da Educação Especial </span>
-          <strong data-field="publico-ee">-</strong>
-        </div>
-        <div class="detail-card">
-          <span> Escolas </span>
-          <strong data-field="escolas">-</strong>
-        </div>
-        <div class="detail-card">
-          <span> Escolas com AEE </span>
-          <strong data-field="escolas-aee">-</strong>
-        </div>
-        <div class="detail-card">
-          <span> Estudantes no AEE </span>
-          <strong data-field="estudantes-aee">-</strong>
-        </div>
         <div class="detail-card">
           <span>Participantes</span>
           <strong data-field="participantes">-</strong>
@@ -132,26 +135,6 @@
         <div class="detail-card warning">
           <span>Escolas sem AEE</span>
           <strong data-field="escolas-sem-aee">-</strong>
-        </div>
-      </div>
-      <div class="modal-charts">
-        <div class="chart-card compact">
-          <div class="card-title">Modalidade das assessorias</div>
-          <canvas id="creModoChart"></canvas>
-        </div>
-        <div class="gauge-block compact">
-          <div class="gauge-row two">
-            <div class="gauge-item">
-              <span class="gauge-label">Público EE × Estudantes AEE</span>
-              <canvas id="creGaugeAEE"></canvas>
-              <div class="gauge-value" id="creGaugeAEEValue">-</div>
-            </div>
-            <div class="gauge-item">
-              <span class="gauge-label">Escolas × Escolas com AEE</span>
-              <canvas id="creGaugeEscolas"></canvas>
-              <div class="gauge-value" id="creGaugeEscolasValue">-</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
