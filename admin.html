@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Administrativo - SAEEX/NAEE</title>
+  <title>Painel Administrativo - CERTA</title>
   <link rel="stylesheet" href="styles/style.css">
 </head>
 <body class="admin-page">
@@ -12,7 +12,10 @@
       <img src="govsc.svg" alt="Logo Governo de SC" class="logo-img">
       <img src="fcee.svg" alt="Logo FCEE" class="logo-img">
     </div>
-    <div class="hero-title">Administração de Assessorias</div>
+    <div class="hero-title">
+      <h1>Administração CERTA</h1>
+      <p>Capacitações e recursos por município</p>
+    </div>
     <div class="hero-actions">
       <a class="button-link" href="index.html">Voltar ao Painel</a>
     </div>
@@ -21,46 +24,22 @@
   <main class="admin-main">
     <section class="panel-heading">
       <div>
-        <h2>Atualizar indicadores por CRE</h2>
-        <p class="muted">Edite manualmente os números e registre as modalidades das assessorias realizadas.</p>
+        <h2>Atualizar municípios e instituições</h2>
+        <p class="muted">Edite os dados das instituições, crie novos municípios ou exclua registros.</p>
       </div>
       <div class="action-row">
         <button id="reset-data-btn" class="secondary">Restaurar padrão</button>
         <button id="save-data-btn">Salvar alterações</button>
+        <button id="add-row-btn">Adicionar município/instituição</button>
       </div>
     </section>
 
     <div class="table-wrapper">
       <table id="cre-table"></table>
     </div>
-
-    <div class="card" style="margin-top: 1rem;">
-      <h3>Lançar nova assessoria</h3>
-      <div class="form-grid" style="margin-top: 0.5rem;">
-        <div>
-          <label>CRE</label>
-          <select id="cre-select"></select>
-        </div>
-        <div>
-          <label>Tipo</label>
-          <select id="mode-select">
-            <option value="presencial">Presencial</option>
-            <option value="online">Online</option>
-          </select>
-        </div>
-        <div>
-          <label>Quantidade</label>
-          <input id="qty-input" type="number" min="1" value="1" />
-        </div>
-      </div>
-      <div class="action-row" style="margin-top: 0.75rem;">
-        <button id="add-assessoria-btn">Registrar</button>
-        <span id="admin-feedback" class="muted"></span>
-      </div>
-    </div>
   </main>
 
-  <script src="scripts/cre-data.js"></script>
+  <script src="scripts/certa-data.js"></script>
   <script src="scripts/shared-data.js"></script>
   <script src="scripts/admin.js"></script>
 </body>

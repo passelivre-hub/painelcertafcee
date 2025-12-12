@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel SAEEX/NAEE - FCEE</title>
+  <title>Painel Estático CERTA - FCEE</title>
   <link rel="stylesheet" href="styles/style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -15,129 +15,43 @@
       <img src="govsc.svg" alt="Logo Governo de SC" class="logo-img">
       <img src="fcee.svg" alt="Logo FCEE" class="logo-img">
     </div>
-    <div class="hero-title" id="hero-title">
-      <p class="hero-kicker">SAEEX/NAEE - FCEE</p>
-      <h1>Painel de Assessorias</h1>
-      <p class="hero-sub"></p>
+    <div class="hero-title">
+      <h1>Painel Estático CERTA - FCEE</h1>
+      <p>Centro de referência de tecnologia assistiva</p>
     </div>
     <div class="hero-actions">
-      <a class="button-link ghost" href="admin.html" aria-label="Painel Administrativo">
+      <a class="button-link icon-only" href="admin.html" aria-label="Painel Administrativo">
         <span class="icon">⚙</span>
       </a>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="map-panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Mapa de Santa Catarina</h2>
+  <main class="main-content">
+    <section class="top-row">
+      <div class="card">
+        <h2>Número de Capacitações e Recursos por Tipo</h2>
+        <div class="chart-container">
+          <canvas id="chart-tipos"></canvas>
         </div>
-        <div id="map-tooltip" class="map-tooltip">Passe o mouse para ver o município<br>e clique para abrir a CRE.</div>
       </div>
-      <div id="map"></div>
-      <div id="map-status" class="map-status"></div>
+      <div class="card">
+        <h2>Capacitações e Recursos por Região</h2>
+        <div class="chart-container">
+          <canvas id="chart-regioes"></canvas>
+        </div>
+      </div>
     </section>
 
-    <section class="info-panel">
-      <div class="gauge-block">
-        <div class="panel-heading tight">
-          <div>
-            <h2>Panorama Geral</h2>
-          </div>
-        </div>
-        <div class="gauge-row two">
-          <div class="gauge-item">
-            <span class="gauge-label">Público EE × Estudantes AEE</span>
-            <canvas id="gaugeAEE"></canvas>
-            <div class="gauge-value" id="gaugeAEEValue">-</div>
-          </div>
-          <div class="gauge-item">
-            <span class="gauge-label">Escolas × Escolas com AEE</span>
-            <canvas id="gaugeEscolas"></canvas>
-            <div class="gauge-value" id="gaugeEscolasValue">-</div>
-          </div>
-        </div>
+    <section class="map-row">
+      <div class="map-header">
+        <h2>Mapa de Santa Catarina</h2>
+        <div class="map-tooltip">Passe o mouse para ver o município<br>e clique para abrir os dados.</div>
       </div>
-      <div class="impact-block">
-        <div class="card-title">Público Impactado</div>
-        <div class="impact-row">
-          <div class="impact-card">
-            <span>Profissionais</span>
-            <strong id="impacto-profissionais">-</strong>
-          </div>
-          <div class="impact-card">
-            <span>Estudantes</span>
-            <strong id="impacto-estudantes">-</strong>
-          </div>
-        </div>
-      </div>
-      <div id="general-indicators" class="stat-grid"></div>
-      <div class="charts-grid">
-        <div class="chart-card compact">
-          <div class="card-title">Modalidade das assessorias</div>
-          <canvas id="modoChart" height="140"></canvas>
-          <div class="chart-legend">Presenciais: <strong id="totals-presencial">0</strong> · Online: <strong id="totals-online">0</strong></div>
-        </div>
-      </div>
+      <div id="map"></div>
     </section>
   </main>
 
-  <div id="cre-modal" class="cre-modal">
-    <div class="cre-modal__content">
-      <button id="cre-modal-close" class="modal-close" aria-label="Fechar">×</button>
-      <div class="modal-header">
-        <div>
-          <h3 class="cre-title">Selecione uma CRE no mapa</h3>
-          <p class="cre-subtitle">Município selecionado: -</p>
-        </div>
-      </div>
-      <div class="modal-charts">
-        <div class="gauge-block compact">
-          <div class="gauge-row two">
-            <div class="gauge-item">
-              <span class="gauge-label">Público EE × Estudantes AEE</span>
-              <canvas id="creGaugeAEE"></canvas>
-              <div class="gauge-value" id="creGaugeAEEValue">-</div>
-            </div>
-            <div class="gauge-item">
-              <span class="gauge-label">Escolas × Escolas com AEE</span>
-              <canvas id="creGaugeEscolas"></canvas>
-              <div class="gauge-value" id="creGaugeEscolasValue">-</div>
-            </div>
-          </div>
-        </div>
-        <div class="chart-card compact">
-          <div class="card-title">Modalidade das assessorias</div>
-          <canvas id="creModoChart"></canvas>
-        </div>
-      </div>
-      <div class="detail-grid">
-        <div class="detail-card">
-          <span>Participantes</span>
-          <strong data-field="participantes">-</strong>
-        </div>
-        <div class="detail-card">
-          <span>Assessorias Presenciais</span>
-          <strong data-field="presencial">-</strong>
-        </div>
-        <div class="detail-card">
-          <span>Assessorias Online</span>
-          <strong data-field="online">-</strong>
-        </div>
-        <div class="detail-card warning">
-          <span>Estudantes fora do AEE</span>
-          <strong data-field="faltantes">-</strong>
-        </div>
-        <div class="detail-card warning">
-          <span>Escolas sem AEE</span>
-          <strong data-field="escolas-sem-aee">-</strong>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="scripts/cre-data.js"></script>
+  <script src="scripts/certa-data.js"></script>
   <script src="scripts/shared-data.js"></script>
   <script src="scripts/main.js"></script>
 </body>

@@ -1,75 +1,87 @@
-const CRE_STORAGE_KEY = 'naee-cre-metrics-v1';
+const STORAGE_KEY = 'certa-data';
 
-function normalizeCreRecords(list) {
-  return list.map((cre, index) => {
-    const regionName = cre.regionName || (cre.name || '').replace(/^CRE\s*\d+\s*-\s*/i, '').replace(/^CRE\s*/i, '').trim();
-    const name = `CRE ${regionName}`.trim();
-    const code = cre.code || `CRE${String(index + 1).padStart(2, '0')}`;
-    return {
-      ...cre,
-      code,
-      name,
-      regionName,
-    };
-  });
+function cloneData(data) {
+  return data.map((item) => ({ ...item }));
 }
 
-function loadCreData() {
-  const stored = localStorage.getItem(CRE_STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length === DEFAULT_CRE_DATA.length) {
-        const normalized = normalizeCreRecords(parsed);
-        localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(normalized));
-        return normalized;
-      }
-    } catch (err) {
-      console.warn('Falha ao ler armazenamento local, usando padrão', err);
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      return JSON.parse(raw);
     }
+  } catch (err) {
+    console.warn('Não foi possível carregar dados salvos, usando padrão.', err);
   }
-  const normalizedDefault = normalizeCreRecords(DEFAULT_CRE_DATA);
-  localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(normalizedDefault));
-  return [...normalizedDefault];
+  return cloneData(CERTA_DEFAULT_DATA);
 }
 
-function saveCreData(data) {
-  localStorage.setItem(CRE_STORAGE_KEY, JSON.stringify(data));
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (err) {
+    console.warn('Não foi possível salvar os dados.', err);
+  }
 }
 
-function computeAggregates(creList) {
-  return creList.reduce(
-    (acc, cre) => {
-      acc.publicoEE += cre.publicoEE;
-      acc.escolas += cre.escolas;
-      acc.escolasAEE += cre.escolasAEE;
-      acc.estudantesAEE += cre.estudantesAEE;
-      acc.participantes += cre.participantes;
-      acc.presencial += cre.presencial;
-      acc.online += cre.online;
+function resetData() {
+  saveData(CERTA_DEFAULT_DATA);
+  return cloneData(CERTA_DEFAULT_DATA);
+}
+
+function aggregateByTipo(data) {
+  return data.reduce(
+    (acc, item) => {
+      acc.oficinas += Number(item.oficinas) || 0;
+      acc.recursoTA += Number(item.recursoTA) || 0;
+      acc.recursosPedagogicos += Number(item.recursosPedagogicos) || 0;
+      acc.openDay += Number(item.openDay) || 0;
       return acc;
     },
-    {
-      publicoEE: 0,
-      escolas: 0,
-      escolasAEE: 0,
-      estudantesAEE: 0,
-      participantes: 0,
-      presencial: 0,
-      online: 0,
-    }
+    { oficinas: 0, recursoTA: 0, recursosPedagogicos: 0, openDay: 0 }
   );
 }
 
-function calculateCoverage(cre) {
-  const faltantesAEE = Math.max(cre.publicoEE - cre.estudantesAEE, 0);
-  const percForaAEE = cre.publicoEE === 0 ? 0 : (faltantesAEE / cre.publicoEE) * 100;
-  const escolasSemAEE = Math.max(cre.escolas - cre.escolasAEE, 0);
-  const percEscolasSemAEE = cre.escolas === 0 ? 0 : (escolasSemAEE / cre.escolas) * 100;
-  return {
-    faltantesAEE,
-    percForaAEE,
-    escolasSemAEE,
-    percEscolasSemAEE,
-  };
+function aggregateByRegiao(data) {
+  const base = Object.fromEntries(REGIOES.map((reg) => [reg, 0]));
+  return data.reduce((acc, item) => {
+    const total = (Number(item.oficinas) || 0) + (Number(item.recursoTA) || 0) + (Number(item.recursosPedagogicos) || 0) + (Number(item.openDay) || 0);
+    acc[item.regiao] = (acc[item.regiao] || 0) + total;
+    return acc;
+  }, base);
 }
+
+function aggregateMunicipios(data) {
+  return data.reduce((acc, item) => {
+    const muni = item.municipio;
+    if (!acc[muni]) {
+      acc[muni] = {
+        municipio: muni,
+        regiao: item.regiao,
+        oficinas: 0,
+        recursoTA: 0,
+        recursosPedagogicos: 0,
+        openDay: 0,
+      };
+    }
+    acc[muni].oficinas += Number(item.oficinas) || 0;
+    acc[muni].recursoTA += Number(item.recursoTA) || 0;
+    acc[muni].recursosPedagogicos += Number(item.recursosPedagogicos) || 0;
+    acc[muni].openDay += Number(item.openDay) || 0;
+    return acc;
+  }, {});
+}
+
+function getInstituicoesPorMunicipio(municipio, data) {
+  return data.filter((item) => item.municipio === municipio);
+}
+
+window.certaData = {
+  loadData,
+  saveData,
+  resetData,
+  aggregateByTipo,
+  aggregateByRegiao,
+  aggregateMunicipios,
+  getInstituicoesPorMunicipio,
+};

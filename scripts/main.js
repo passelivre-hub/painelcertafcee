@@ -1,313 +1,157 @@
-const greenPalette = [
-  '#004b23', '#006400', '#228b22', '#2f7a4d', '#3aa76d', '#57c17b', '#7bd38d', '#a7e3b2', '#c7f2cf', '#e4f7e8'
-];
-const neutralGray = '#b8c2c4';
-
-let creData = [];
-let map;
-let municipalityToCre = {};
-let selectedCreCode = null;
-let modeChart;
-let modalModeChart;
-let modalEl;
-let gaugeCharts = {};
-let modalGaugeCharts = {};
-
-const normalizeName = (str) =>
-  (str || '')
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toUpperCase()
-    .trim();
+let tipoChart;
+let regiaoChart;
+let mapa;
+let geoLayer;
+let dados = [];
 
 function init() {
-  creData = loadCreData();
-  renderHero();
-  setupTotals();
-  setupCharts();
-  setupModal();
+  dados = certaData.loadData();
+  renderCharts();
   initMap();
 }
 
-function renderHero() {
-  const heading = document.querySelector('#hero-title');
-  if (heading) {
-    const kicker = heading.querySelector('.hero-kicker');
-    if (kicker) kicker.textContent = 'SAEEX/NAEE - FCEE';
-    heading.querySelector('h1').textContent = 'Painel de Assessorias';
-    const subtitle = heading.querySelector('.hero-sub');
-    if (subtitle) subtitle.textContent = '';
-  }
-}
+function renderCharts() {
+  const totals = certaData.aggregateByTipo(dados);
+  const regiaoTotals = certaData.aggregateByRegiao(dados);
 
-function setupTotals() {
-  const totals = computeAggregates(creData);
-  const indicators = document.getElementById('general-indicators');
-  indicators.innerHTML = '';
-  const cards = [
-    { label: 'Público EE', value: totals.publicoEE.toLocaleString('pt-BR') },
-    { label: 'Escolas', value: totals.escolas.toLocaleString('pt-BR') },
-    { label: 'Escolas com AEE', value: totals.escolasAEE.toLocaleString('pt-BR') },
-    { label: 'Estudantes no AEE', value: totals.estudantesAEE.toLocaleString('pt-BR') },
-    { label: 'Participantes', value: totals.participantes.toLocaleString('pt-BR') },
-  ];
-  cards.forEach((card) => {
-    const el = document.createElement('div');
-    el.className = 'stat-card';
-    el.innerHTML = `<span>${card.label}</span><strong>${card.value}</strong>`;
-    indicators.appendChild(el);
-  });
+  const tipoCtx = document.getElementById('chart-tipos');
+  const regiaoCtx = document.getElementById('chart-regioes');
 
-  document.getElementById('totals-presencial').textContent = totals.presencial;
-  document.getElementById('totals-online').textContent = totals.online;
+  const tipoData = [totals.oficinas, totals.recursoTA, totals.recursosPedagogicos, totals.openDay];
+  const labelsTipo = ['Oficinas', 'Recursos de TA', 'Recursos Pedagógicos', 'Open Day'];
 
-  document.getElementById('impacto-profissionais').textContent = totals.participantes.toLocaleString('pt-BR');
-  document.getElementById('impacto-estudantes').textContent = totals.estudantesAEE.toLocaleString('pt-BR');
+  const regiaoData = REGIOES.map((reg) => regiaoTotals[reg] || 0);
 
-  renderGeneralGauges(totals);
-}
+  if (tipoChart) tipoChart.destroy();
+  if (regiaoChart) regiaoChart.destroy();
 
-function setupCharts() {
-  const totals = computeAggregates(creData);
-  const ctxMode = document.getElementById('modoChart').getContext('2d');
-  if (modeChart) modeChart.destroy();
-  modeChart = new Chart(ctxMode, {
-    type: 'doughnut',
+  tipoChart = new Chart(tipoCtx, {
+    type: 'bar',
     data: {
-      labels: ['Presencial', 'Online'],
-      datasets: [{
-        data: [totals.presencial, totals.online],
-        backgroundColor: ['#0b7a3d', '#7ac29a'],
-        borderWidth: 0,
-      }],
-    },
-    options: {
-      plugins: { legend: { position: 'bottom' } },
-      cutout: '60%'
-    },
-  });
-}
-
-function setupModal() {
-  modalEl = document.getElementById('cre-modal');
-  const closeBtn = document.getElementById('cre-modal-close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeModal);
-  }
-  if (modalEl) {
-    modalEl.addEventListener('click', (e) => {
-      if (e.target === modalEl) closeModal();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
-    });
-  }
-}
-
-function initMap() {
-  map = L.map('map').setView([-27.3, -50.9], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap',
-    minZoom: 6,
-    maxZoom: 12,
-  }).addTo(map);
-
-  const mapStatus = document.getElementById('map-status');
-  if (mapStatus) mapStatus.textContent = 'Carregando municípios...';
-
-  fetch('sc_municipios.geojson')
-    .then((res) => res.json())
-    .then((geojson) => {
-      municipalityToCre = buildMunicipalityIndex();
-
-      const layer = L.geoJSON(geojson, {
-        style: featureStyle,
-        onEachFeature: attachFeatureEvents,
-      });
-      layer.addTo(map);
-      if (mapStatus) mapStatus.textContent = '';
-      setTimeout(() => map.invalidateSize(), 100);
-    })
-    .catch((err) => {
-      console.error('Erro ao carregar mapa', err);
-      if (mapStatus) mapStatus.textContent = 'Não foi possível carregar o mapa. Recarregue a página ou verifique a conexão.';
-    });
-}
-
-function featureStyle(feature) {
-  const creCode =
-    municipalityToCre[feature.properties.name] || municipalityToCre[normalizeName(feature.properties.name)];
-  const cre = creData.find((c) => c.code === creCode);
-  const baseColor =
-    cre && cre.hasAssessoria ? greenPalette[cre.colorIndex % greenPalette.length] : neutralGray;
-  return {
-    color: '#ffffff',
-    weight: 0.5,
-    fillColor: baseColor,
-    fillOpacity: 0.85,
-  };
-}
-
-function attachFeatureEvents(feature, layer) {
-  layer.on({
-    mouseover: (e) => highlightFeature(e, feature),
-    mouseout: (e) => resetHighlight(e, feature),
-    click: () => selectCre(feature.properties.name),
-  });
-}
-
-function highlightFeature(e, feature) {
-  const creCode =
-    municipalityToCre[feature.properties.name] || municipalityToCre[normalizeName(feature.properties.name)];
-  const cre = creData.find((c) => c.code === creCode);
-  e.target.setStyle({ weight: 2, color: '#0b7a3d' });
-  const tip = document.getElementById('map-tooltip');
-  tip.innerHTML = `<strong>${feature.properties.name}</strong><br>${cre ? cre.name : ''}`;
-}
-
-function resetHighlight(e, feature) {
-  e.target.setStyle({ weight: 0.5, color: '#ffffff' });
-  const tip = document.getElementById('map-tooltip');
-  tip.innerHTML = 'Passe o mouse para ver o município<br>e clique para abrir a CRE';
-}
-
-function selectCre(municipioName) {
-  const creCode = municipalityToCre[municipioName] || municipalityToCre[normalizeName(municipioName)];
-  selectedCreCode = creCode;
-  const cre = creData.find((c) => c.code === creCode);
-  if (!cre) return;
-  renderCreDetail(cre, municipioName);
-}
-
-function buildMunicipalityIndex() {
-  const index = {};
-  const creLookup = {};
-  creData.forEach((cre) => {
-    const creName = cre.regionName || cre.name.replace(/^CRE\s*/i, '');
-    creLookup[normalizeName(creName)] = cre.code;
-  });
-
-  Object.entries(MUNICIPALITY_CRE_MAP).forEach(([municipio, creName]) => {
-    const code = creLookup[normalizeName(creName)];
-    if (code) {
-      index[municipio] = code;
-      index[normalizeName(municipio)] = code;
-    }
-  });
-
-  return index;
-}
-
-function renderCreDetail(cre, municipioName) {
-  const container = document.getElementById('cre-modal');
-  const coverage = calculateCoverage(cre);
-  container.querySelector('.cre-title').textContent = `${cre.name}`;
-  container.querySelector('.cre-subtitle').textContent = `Município selecionado: ${municipioName}`;
-  container.querySelector('[data-field="participantes"]').textContent = cre.participantes;
-  container.querySelector('[data-field="presencial"]').textContent = cre.presencial;
-  container.querySelector('[data-field="online"]').textContent = cre.online;
-  container.querySelector('[data-field="faltantes"]').textContent = `${coverage.faltantesAEE} (${coverage.percForaAEE.toFixed(1)}%)`;
-  container.querySelector('[data-field="escolas-sem-aee"]').textContent = `${coverage.escolasSemAEE} (${coverage.percEscolasSemAEE.toFixed(1)}%)`;
-  container.classList.add('active');
-
-  if (modalEl) {
-    modalEl.classList.add('open');
-  }
-
-  renderModalCharts(cre);
-}
-
-function closeModal() {
-  if (modalEl) {
-    modalEl.classList.remove('open');
-    modalEl.classList.remove('active');
-  }
-}
-
-function renderGeneralGauges(totals) {
-  const studentPercent = totals.publicoEE ? Math.min(100, (totals.estudantesAEE / totals.publicoEE) * 100) : 0;
-  renderGauge('gaugeAEE', studentPercent, totals.estudantesAEE, totals.publicoEE);
-  const studentValue = document.getElementById('gaugeAEEValue');
-  if (studentValue)
-    studentValue.textContent = `${totals.estudantesAEE.toLocaleString('pt-BR')} de ${totals.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
-
-  const escolaPercent = totals.escolas ? Math.min(100, (totals.escolasAEE / totals.escolas) * 100) : 0;
-  renderGauge('gaugeEscolas', escolaPercent, totals.escolasAEE, totals.escolas);
-  const escolaValue = document.getElementById('gaugeEscolasValue');
-  if (escolaValue)
-    escolaValue.textContent = `${totals.escolasAEE.toLocaleString('pt-BR')} de ${totals.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
-}
-
-function renderModalCharts(cre) {
-  const modoCtx = document.getElementById('creModoChart').getContext('2d');
-  if (modalModeChart) modalModeChart.destroy();
-  modalModeChart = new Chart(modoCtx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Presencial', 'Online'],
-      datasets: [{
-        data: [cre.presencial, cre.online],
-        backgroundColor: ['#0b7a3d', '#7ac29a'],
-        borderWidth: 0,
-      }],
-    },
-    options: {
-      plugins: { legend: { position: 'bottom' } },
-      cutout: '60%',
-    },
-  });
-
-  const studentPercent = cre.publicoEE ? Math.min(100, (cre.estudantesAEE / cre.publicoEE) * 100) : 0;
-  renderGauge('creGaugeAEE', studentPercent, cre.estudantesAEE, cre.publicoEE, modalGaugeCharts);
-  const studentVal = document.getElementById('creGaugeAEEValue');
-  if (studentVal)
-    studentVal.textContent = `${cre.estudantesAEE.toLocaleString('pt-BR')} de ${cre.publicoEE.toLocaleString('pt-BR')} (${studentPercent.toFixed(1)}%)`;
-
-  const escolaPercent = cre.escolas ? Math.min(100, (cre.escolasAEE / cre.escolas) * 100) : 0;
-  renderGauge('creGaugeEscolas', escolaPercent, cre.escolasAEE, cre.escolas, modalGaugeCharts);
-  const escolaVal = document.getElementById('creGaugeEscolasValue');
-  if (escolaVal)
-    escolaVal.textContent = `${cre.escolasAEE.toLocaleString('pt-BR')} de ${cre.escolas.toLocaleString('pt-BR')} (${escolaPercent.toFixed(1)}%)`;
-}
-
-function renderGauge(canvasId, percent, value, total, registry = gaugeCharts) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (registry[canvasId]) registry[canvasId].destroy();
-  registry[canvasId] = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
+      labels: labelsTipo,
       datasets: [
         {
-          data: [percent, 100 - percent],
-          meta: { value, total, percent },
-          backgroundColor: ['#0b7a3d', '#e6f3e6'],
-          borderWidth: 0,
+          label: 'Quantidade',
+          data: tipoData,
+          backgroundColor: ['#c60c2f', '#d63c55', '#e46a7d', '#f49ca9'],
+          borderRadius: 8,
         },
       ],
     },
     options: {
-      rotation: -90,
-      circumference: 180,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          enabled: true,
-          callbacks: {
-            label: (context) => {
-              const meta = context.dataset.meta;
-              if (!meta) return '';
-              const totalLabel = (meta.total ?? 0).toLocaleString('pt-BR');
-              const valueLabel = (meta.value ?? 0).toLocaleString('pt-BR');
-              return `${valueLabel} de ${totalLabel} (${(meta.percent ?? 0).toFixed(1)}%)`;
-            },
-          },
+        tooltip: { enabled: true },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#34424a' },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#6c7a82' },
+          grid: { color: '#d7dfe3' },
         },
       },
-      cutout: '70%',
     },
   });
+
+  regiaoChart = new Chart(regiaoCtx, {
+    type: 'bar',
+    data: {
+      labels: REGIOES,
+      datasets: [
+        {
+          label: 'Total',
+          data: regiaoData,
+          backgroundColor: '#c60c2f',
+          borderRadius: 8,
+        },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#34424a' },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#6c7a82' },
+          grid: { color: '#d7dfe3' },
+        },
+      },
+    },
+  });
+}
+
+function initMap() {
+  mapa = L.map('map').setView([-27.1, -50.9], 7);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 12,
+    attribution: '&copy; OpenStreetMap',
+  }).addTo(mapa);
+
+  fetch('sc_municipios.geojson')
+    .then((res) => res.json())
+    .then((geojson) => {
+      geoLayer = L.geoJSON(geojson, {
+        style: estiloMunicipio,
+        onEachFeature,
+      }).addTo(mapa);
+    })
+    .catch((err) => console.error('Erro ao carregar mapa', err));
+}
+
+function hasAtendimento(nome) {
+  const totais = certaData.aggregateMunicipios(dados);
+  const info = totais[nome];
+  if (!info) return false;
+  return info.oficinas + info.recursoTA + info.recursosPedagogicos + info.openDay > 0;
+}
+
+function estiloMunicipio(feature) {
+  const nome = feature.properties.name;
+  const ativo = hasAtendimento(nome);
+  return {
+    weight: 0.8,
+    color: '#ffffff',
+    fillColor: ativo ? '#c60c2f' : '#c2c2c2',
+    fillOpacity: ativo ? 0.65 : 0.35,
+  };
+}
+
+function onEachFeature(feature, layer) {
+  const nome = feature.properties.name;
+  layer.on({
+    click: () => abrirPopup(nome, layer),
+  });
+  layer.bindTooltip(nome, { sticky: true, direction: 'top' });
+}
+
+function abrirPopup(municipio, layer) {
+  const instituicoes = certaData.getInstituicoesPorMunicipio(municipio, dados);
+  if (!instituicoes.length) {
+    layer.bindPopup(`<div class="popup"><h4>${municipio}</h4><p>Sem instituições cadastradas.</p></div>`).openPopup();
+    return;
+  }
+
+  const lista = instituicoes
+    .map((inst) => {
+      return `<li><strong>${inst.instituicao}</strong><br>Oficinas: ${inst.oficinas} · Recursos TA: ${inst.recursoTA}<br>Recursos Pedagógicos: ${inst.recursosPedagogicos} · Open Day: ${inst.openDay}</li>`;
+    })
+    .join('');
+
+  const html = `<div class="popup"><h4>${municipio}</h4><ul>${lista}</ul></div>`;
+  layer.bindPopup(html).openPopup();
 }
 
 document.addEventListener('DOMContentLoaded', init);

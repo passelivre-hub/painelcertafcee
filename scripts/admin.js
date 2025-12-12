@@ -1,93 +1,94 @@
-let creRows = [];
+let tabela;
+let dados = [];
 
 function initAdmin() {
-  creRows = loadCreData();
-  renderTable();
-  fillSelects();
-  bindActions();
+  tabela = document.getElementById('cre-table');
+  dados = certaData.loadData();
+  renderTabela();
+  document.getElementById('add-row-btn').addEventListener('click', adicionarLinha);
+  document.getElementById('reset-data-btn').addEventListener('click', () => {
+    dados = certaData.resetData();
+    renderTabela();
+  });
+  document.getElementById('save-data-btn').addEventListener('click', () => {
+    certaData.saveData(dados);
+    alert('Dados salvos com sucesso');
+  });
 }
 
-function renderTable() {
-  const table = document.getElementById('cre-table');
-  table.innerHTML = '';
-  const header = document.createElement('tr');
-  ['CRE', 'Público EE', 'Nº Escolas', 'Escolas com AEE', 'Estudantes no AEE', 'Participantes', 'Presencial', 'Online', 'Sem assessoria?'].forEach((h) => {
-    const th = document.createElement('th');
-    th.textContent = h;
-    header.appendChild(th);
-  });
-  table.appendChild(header);
+function renderTabela() {
+  tabela.innerHTML = '';
+  const header = document.createElement('thead');
+  header.innerHTML = `
+    <tr>
+      <th>Município</th>
+      <th>Região</th>
+      <th>Nome da Instituição</th>
+      <th>Qt de Oficinas</th>
+      <th>Qt de Recurso de TA</th>
+      <th>Recursos Pedagógicos</th>
+      <th>Open Day</th>
+      <th>Ações</th>
+    </tr>`;
+  tabela.appendChild(header);
 
-  creRows.forEach((row, index) => {
+  const body = document.createElement('tbody');
+  dados.forEach((item, idx) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${row.name}</td>
-      <td><input type="number" min="0" value="${row.publicoEE}" data-field="publicoEE" data-index="${index}"></td>
-      <td><input type="number" min="0" value="${row.escolas}" data-field="escolas" data-index="${index}"></td>
-      <td><input type="number" min="0" value="${row.escolasAEE}" data-field="escolasAEE" data-index="${index}"></td>
-      <td><input type="number" min="0" value="${row.estudantesAEE}" data-field="estudantesAEE" data-index="${index}"></td>
-      <td><input type="number" min="0" value="${row.participantes}" data-field="participantes" data-index="${index}"></td>
-      <td><input type="number" min="0" value="${row.presencial}" data-field="presencial" data-index="${index}"></td>
-      <td><input type="number" min="0" value="${row.online}" data-field="online" data-index="${index}"></td>
-      <td><input type="checkbox" data-field="hasAssessoria" data-index="${index}" ${row.hasAssessoria ? 'checked' : ''}></td>
+      <td><input type="text" value="${item.municipio}" data-field="municipio" data-idx="${idx}"></td>
+      <td>${criarSelectRegiao(item.regiao, idx)}</td>
+      <td><input type="text" value="${item.instituicao}" data-field="instituicao" data-idx="${idx}"></td>
+      <td><input type="number" min="0" value="${item.oficinas}" data-field="oficinas" data-idx="${idx}"></td>
+      <td><input type="number" min="0" value="${item.recursoTA}" data-field="recursoTA" data-idx="${idx}"></td>
+      <td><input type="number" min="0" value="${item.recursosPedagogicos}" data-field="recursosPedagogicos" data-idx="${idx}"></td>
+      <td><input type="number" min="0" value="${item.openDay}" data-field="openDay" data-idx="${idx}"></td>
+      <td><button class="secondary" data-action="remove" data-idx="${idx}">Excluir</button></td>
     `;
-    table.appendChild(tr);
+    body.appendChild(tr);
   });
+  tabela.appendChild(body);
 
-  table.querySelectorAll('input').forEach((input) => {
-    input.addEventListener('change', (e) => {
-      const idx = Number(e.target.dataset.index);
-      const field = e.target.dataset.field;
-      if (field === 'hasAssessoria') {
-        creRows[idx][field] = e.target.checked;
-      } else {
-        creRows[idx][field] = Number(e.target.value);
-      }
-    });
+  tabela.querySelectorAll('input').forEach((input) => {
+    input.addEventListener('input', onEditarCampo);
   });
-}
-
-function fillSelects() {
-  const select = document.getElementById('cre-select');
-  select.innerHTML = '';
-  creRows.forEach((cre) => {
-    const option = document.createElement('option');
-    option.value = cre.code;
-    option.textContent = cre.name;
-    select.appendChild(option);
+  tabela.querySelectorAll('select').forEach((select) => {
+    select.addEventListener('change', onEditarCampo);
+  });
+  tabela.querySelectorAll('button[data-action="remove"]').forEach((btn) => {
+    btn.addEventListener('click', onRemoverLinha);
   });
 }
 
-function bindActions() {
-  document.getElementById('reset-data-btn').addEventListener('click', () => {
-    creRows = [...DEFAULT_CRE_DATA];
-    saveCreData(creRows);
-    renderTable();
-    fillSelects();
-    setFeedback('Dados restaurados para o padrão inicial.');
-  });
-
-  document.getElementById('save-data-btn').addEventListener('click', () => {
-    saveCreData(creRows);
-    setFeedback('Informações salvas com sucesso.');
-  });
-
-  document.getElementById('add-assessoria-btn').addEventListener('click', () => {
-    const creCode = document.getElementById('cre-select').value;
-    const mode = document.getElementById('mode-select').value;
-    const qty = Number(document.getElementById('qty-input').value) || 0;
-    const cre = creRows.find((c) => c.code === creCode);
-    if (!cre || qty <= 0) return setFeedback('Informe quantidade válida.');
-    cre[mode] += qty;
-    cre.hasAssessoria = true;
-    renderTable();
-    saveCreData(creRows);
-    setFeedback(`Registradas ${qty} assessorias ${mode} na ${cre.name}.`);
-  });
+function criarSelectRegiao(valor, idx) {
+  const options = REGIOES.map((r) => `<option value="${r}" ${r === valor ? 'selected' : ''}>${r}</option>`).join('');
+  return `<select data-field="regiao" data-idx="${idx}">${options}</select>`;
 }
 
-function setFeedback(message) {
-  document.getElementById('admin-feedback').textContent = message;
+function onEditarCampo(evt) {
+  const idx = Number(evt.target.dataset.idx);
+  const field = evt.target.dataset.field;
+  const val = evt.target.type === 'number' ? Number(evt.target.value || 0) : evt.target.value;
+  dados[idx][field] = val;
+}
+
+function onRemoverLinha(evt) {
+  const idx = Number(evt.target.dataset.idx);
+  dados.splice(idx, 1);
+  renderTabela();
+}
+
+function adicionarLinha() {
+  dados.push({
+    municipio: 'Novo município',
+    regiao: REGIOES[0],
+    instituicao: 'Nova instituição',
+    oficinas: 0,
+    recursoTA: 0,
+    recursosPedagogicos: 0,
+    openDay: 0,
+  });
+  renderTabela();
 }
 
 document.addEventListener('DOMContentLoaded', initAdmin);
