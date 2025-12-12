@@ -15,9 +15,16 @@
       <img src="govsc.svg" alt="Logo Governo de SC" class="logo-img">
       <img src="fcee.svg" alt="Logo FCEE" class="logo-img">
     </div>
-    <div class="hero-title" id="hero-title">Painel de Assessorias do SAEEX/NAEE - FCEE</div>
+    <div class="hero-title" id="hero-title">
+      <p class="hero-kicker">SAEEX/NAEE - FCEE</p>
+      <h1>Painel de Assessorias</h1>
+      <p class="hero-sub">Monitoramento das Coordenadorias Regionais de Educação de Santa Catarina</p>
+    </div>
     <div class="hero-actions">
-      <a class="button-link" href="admin.html">Ir para Painel Administrativo</a>
+      <a class="button-link ghost" href="admin.html" aria-label="Painel Administrativo">
+        <span class="icon">⇢</span>
+        <span>Painel Administrativo</span>
+      </a>
     </div>
   </header>
 
@@ -26,7 +33,6 @@
       <div class="panel-heading">
         <div>
           <h2>Mapa de Santa Catarina</h2>
-          <p class="muted">Municípios agrupados pelas 37 Coordenadorias Regionais de Educação</p>
         </div>
         <div id="map-tooltip" class="map-tooltip">Passe o mouse para ver o município e clique para abrir a CRE</div>
       </div>
@@ -37,15 +43,49 @@
       <div class="panel-heading">
         <div>
           <h2>Panorama Geral</h2>
-          <p class="muted">Soma de todas as CREs de SC · paleta de verdes do GOV SC 2023</p>
-        </div>
-        <div class="objects-row">
-          <span class="object">📚</span>
-          <span class="object">🔍</span>
-          <span class="object">🧭</span>
         </div>
       </div>
       <div id="general-indicators" class="stat-grid"></div>
+      <div class="gauge-block">
+        <div class="card-title">Cobertura de Estudantes</div>
+        <div class="gauge-row">
+          <div class="gauge-item">
+            <span class="gauge-label">Público EE</span>
+            <canvas id="gaugePublico"></canvas>
+            <div class="gauge-value" id="gaugePublicoValue">-</div>
+          </div>
+          <div class="gauge-item">
+            <span class="gauge-label">Estudantes no AEE</span>
+            <canvas id="gaugeAEE"></canvas>
+            <div class="gauge-value" id="gaugeAEEValue">-</div>
+          </div>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge-item">
+            <span class="gauge-label">Escolas</span>
+            <canvas id="gaugeEscolas"></canvas>
+            <div class="gauge-value" id="gaugeEscolasValue">-</div>
+          </div>
+          <div class="gauge-item">
+            <span class="gauge-label">Escolas com AEE</span>
+            <canvas id="gaugeEscolasAEE"></canvas>
+            <div class="gauge-value" id="gaugeEscolasAEEValue">-</div>
+          </div>
+        </div>
+      </div>
+      <div class="impact-block">
+        <div class="card-title">Público Impactado</div>
+        <div class="impact-row">
+          <div class="impact-card">
+            <span>Profissionais</span>
+            <strong id="impacto-profissionais">-</strong>
+          </div>
+          <div class="impact-card">
+            <span>Estudantes</span>
+            <strong id="impacto-estudantes">-</strong>
+          </div>
+        </div>
+      </div>
       <div class="charts-grid">
         <div class="chart-card">
           <div class="card-title">Modalidade das assessorias</div>
@@ -106,8 +146,37 @@
           <strong data-field="escolas-sem-aee">-</strong>
         </div>
       </div>
-      <div class="detail-chart">
-        <canvas id="creChart" height="140"></canvas>
+      <div class="modal-charts">
+        <div class="chart-card compact">
+          <div class="card-title">Modalidade das assessorias</div>
+          <canvas id="creModoChart"></canvas>
+        </div>
+        <div class="gauge-block compact">
+          <div class="gauge-row">
+            <div class="gauge-item">
+              <span class="gauge-label">Público EE</span>
+              <canvas id="creGaugePublico"></canvas>
+              <div class="gauge-value" id="creGaugePublicoValue">-</div>
+            </div>
+            <div class="gauge-item">
+              <span class="gauge-label">Estudantes no AEE</span>
+              <canvas id="creGaugeAEE"></canvas>
+              <div class="gauge-value" id="creGaugeAEEValue">-</div>
+            </div>
+          </div>
+          <div class="gauge-row">
+            <div class="gauge-item">
+              <span class="gauge-label">Escolas</span>
+              <canvas id="creGaugeEscolas"></canvas>
+              <div class="gauge-value" id="creGaugeEscolasValue">-</div>
+            </div>
+            <div class="gauge-item">
+              <span class="gauge-label">Escolas com AEE</span>
+              <canvas id="creGaugeEscolasAEE"></canvas>
+              <div class="gauge-value" id="creGaugeEscolasAEEValue">-</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -7,8 +7,11 @@ let creData = [];
 let map;
 let municipalityToCre = {};
 let selectedCreCode = null;
-let detailChart;
+let modeChart;
+let modalModeChart;
 let modalEl;
+let gaugeCharts = {};
+let modalGaugeCharts = {};
 
 const normalizeName = (str) =>
   (str || '')
@@ -29,7 +32,9 @@ function init() {
 function renderHero() {
   const heading = document.querySelector('#hero-title');
   if (heading) {
-    heading.textContent = 'Painel de Assessorias do SAEEX/NAEE - FCEE';
+    heading.querySelector('h1').textContent = 'Painel de Assessorias';
+    const subtitle = heading.querySelector('.hero-sub');
+    if (subtitle) subtitle.textContent = 'SAEEX/NAEE - FCEE · Educação Especial em Santa Catarina';
   }
 }
 
@@ -53,12 +58,18 @@ function setupTotals() {
 
   document.getElementById('totals-presencial').textContent = totals.presencial;
   document.getElementById('totals-online').textContent = totals.online;
+
+  document.getElementById('impacto-profissionais').textContent = totals.participantes.toLocaleString('pt-BR');
+  document.getElementById('impacto-estudantes').textContent = totals.estudantesAEE.toLocaleString('pt-BR');
+
+  renderGeneralGauges(totals);
 }
 
 function setupCharts() {
   const totals = computeAggregates(creData);
   const ctxMode = document.getElementById('modoChart').getContext('2d');
-  new Chart(ctxMode, {
+  if (modeChart) modeChart.destroy();
+  modeChart = new Chart(ctxMode, {
     type: 'doughnut',
     data: {
       labels: ['Presencial', 'Online'],
@@ -70,7 +81,7 @@ function setupCharts() {
     },
     options: {
       plugins: { legend: { position: 'bottom' } },
-      cutout: '55%'
+      cutout: '60%'
     },
   });
 }
@@ -179,8 +190,6 @@ function buildMunicipalityIndex() {
 function renderCreDetail(cre, municipioName) {
   const container = document.getElementById('cre-modal');
   const coverage = calculateCoverage(cre);
-  const semAEELabel = 'Fora do AEE';
-  const semEscolaAEELabel = 'Escolas sem AEE';
   container.querySelector('.cre-title').textContent = `${cre.name}`;
   container.querySelector('.cre-subtitle').textContent = `Município selecionado: ${municipioName}`;
   container.querySelector('[data-field="publico-ee"]').textContent = cre.publicoEE.toLocaleString('pt-BR');
@@ -198,44 +207,89 @@ function renderCreDetail(cre, municipioName) {
     modalEl.classList.add('open');
   }
 
-  const chartCtx = document.getElementById('creChart').getContext('2d');
-  if (detailChart) detailChart.destroy();
-  detailChart = new Chart(chartCtx, {
-    type: 'bar',
-    data: {
-      labels: ['Público EE', 'Estudantes no AEE', semAEELabel, 'Escolas', 'Escolas com AEE', semEscolaAEELabel, 'Participantes'],
-      datasets: [
-        {
-          label: cre.name,
-          data: [
-            cre.publicoEE,
-            cre.estudantesAEE,
-            coverage.faltantesAEE,
-            cre.escolas,
-            cre.escolasAEE,
-            coverage.escolasSemAEE,
-            cre.participantes,
-          ],
-          backgroundColor: ['#a7e3b2', '#57c17b', '#f59e0b', '#c7f2cf', '#2f7a4d', '#fbbf24', '#0b7a3d'],
-          borderWidth: 0,
-        },
-      ],
-    },
-    options: {
-      indexAxis: 'y',
-      scales: {
-        x: { beginAtZero: true, grid: { color: '#dfe7e2' } },
-        y: { grid: { display: false } },
-      },
-      plugins: { legend: { display: false } },
-    },
-  });
+  renderModalCharts(cre);
 }
 
 function closeModal() {
   if (modalEl) {
     modalEl.classList.remove('open');
+    modalEl.classList.remove('active');
   }
+}
+
+function renderGeneralGauges(totals) {
+  const gaugeData = [
+    { id: 'gaugePublico', value: totals.publicoEE, total: totals.publicoEE, valueEl: 'gaugePublicoValue' },
+    { id: 'gaugeAEE', value: totals.estudantesAEE, total: totals.publicoEE || totals.estudantesAEE, valueEl: 'gaugeAEEValue' },
+    { id: 'gaugeEscolas', value: totals.escolas, total: totals.escolas, valueEl: 'gaugeEscolasValue' },
+    { id: 'gaugeEscolasAEE', value: totals.escolasAEE, total: totals.escolas || totals.escolasAEE, valueEl: 'gaugeEscolasAEEValue' },
+  ];
+
+  gaugeData.forEach((item) => {
+    const percent = item.total ? Math.min(100, (item.value / item.total) * 100) : 0;
+    renderGauge(item.id, percent);
+    const valueEl = document.getElementById(item.valueEl);
+    if (valueEl) valueEl.textContent = `${item.value.toLocaleString('pt-BR')} (${percent.toFixed(1)}%)`;
+  });
+}
+
+function renderModalCharts(cre) {
+  const modoCtx = document.getElementById('creModoChart').getContext('2d');
+  if (modalModeChart) modalModeChart.destroy();
+  modalModeChart = new Chart(modoCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Presencial', 'Online'],
+      datasets: [{
+        data: [cre.presencial, cre.online],
+        backgroundColor: ['#0b7a3d', '#7ac29a'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } },
+      cutout: '60%',
+    },
+  });
+
+  const gaugeData = [
+    { id: 'creGaugePublico', value: cre.publicoEE, total: cre.publicoEE, valueEl: 'creGaugePublicoValue' },
+    { id: 'creGaugeAEE', value: cre.estudantesAEE, total: cre.publicoEE || cre.estudantesAEE, valueEl: 'creGaugeAEEValue' },
+    { id: 'creGaugeEscolas', value: cre.escolas, total: cre.escolas, valueEl: 'creGaugeEscolasValue' },
+    { id: 'creGaugeEscolasAEE', value: cre.escolasAEE, total: cre.escolas || cre.escolasAEE, valueEl: 'creGaugeEscolasAEEValue' },
+  ];
+
+  gaugeData.forEach((item) => {
+    const percent = item.total ? Math.min(100, (item.value / item.total) * 100) : 0;
+    renderGauge(item.id, percent, modalGaugeCharts);
+    const valueEl = document.getElementById(item.valueEl);
+    if (valueEl) valueEl.textContent = `${item.value.toLocaleString('pt-BR')} (${percent.toFixed(1)}%)`;
+  });
+}
+
+function renderGauge(canvasId, percent, registry = gaugeCharts) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (registry[canvasId]) registry[canvasId].destroy();
+  registry[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [
+        {
+          data: [percent, 100 - percent],
+          backgroundColor: ['#0b7a3d', '#e6f3e6'],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      rotation: -90,
+      circumference: 180,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      cutout: '70%',
+    },
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -6,6 +6,7 @@
   --green-600: #1f8f4d;
   --green-400: #57c17b;
   --green-200: #a7e3b2;
+  --green-100: #e6f3e6;
   --neutral-100: #f4f6f5;
   --neutral-300: #dbe3de;
   --neutral-500: #81938a;
@@ -29,19 +30,40 @@ body {
 
 .hero {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1.2fr 0.7fr;
   align-items: center;
   gap: 1rem;
   padding: 1.25rem 2rem;
-  background: linear-gradient(90deg, var(--green-900), var(--green-600));
+  background: radial-gradient(circle at 10% 20%, rgba(87, 193, 123, 0.18), transparent 35%),
+    radial-gradient(circle at 90% 20%, rgba(31, 143, 77, 0.18), transparent 30%),
+    linear-gradient(110deg, var(--green-900) 0%, var(--green-700) 45%, var(--green-600) 100%);
   color: var(--white);
 }
 
 .hero-title {
   text-align: center;
-  font-size: 1.6rem;
-  font-weight: 700;
+  display: grid;
+  gap: 0.2rem;
   letter-spacing: 0.02em;
+}
+
+.hero-title h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+.hero-kicker {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-sub {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
 }
 
 .hero-logos {
@@ -79,6 +101,22 @@ button,
   box-shadow: 0 8px 18px rgba(0, 75, 35, 0.18);
 }
 
+.button-link.ghost {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+}
+
+.button-link .icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+}
+
 button.secondary,
 .button-link.secondary {
   background: #fff;
@@ -89,10 +127,10 @@ button.secondary,
 
 .layout {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  grid-template-columns: 70% 30%;
   gap: 1rem;
   padding: 1rem 1.5rem 1.25rem;
-  height: calc(100vh - 150px);
+  height: calc(100vh - 180px);
 }
 
 .map-panel,
@@ -144,12 +182,6 @@ button.secondary,
   font-size: 0.95rem;
 }
 
-.objects-row {
-  display: flex;
-  gap: 0.35rem;
-  font-size: 1.2rem;
-}
-
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -174,7 +206,7 @@ button.secondary,
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.65rem;
   margin-top: 0.6rem;
 }
@@ -184,16 +216,86 @@ button.secondary,
   border-radius: 12px;
   padding: 0.75rem;
   background: #fdfefc;
-  min-height: 210px;
+  min-height: 160px;
 }
 
 .chart-card canvas {
-  max-height: 150px;
+  max-height: 120px;
 }
 
 .card-title {
   font-weight: 700;
   margin-bottom: 0.35rem;
+}
+
+.gauge-block {
+  border: 1px solid var(--neutral-300);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #fdfefc;
+  margin-top: 0.7rem;
+}
+
+.gauge-block.compact {
+  margin-top: 0;
+}
+
+.gauge-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+
+.gauge-item {
+  background: var(--neutral-100);
+  border: 1px solid var(--neutral-300);
+  border-radius: 12px;
+  padding: 0.5rem 0.5rem 0.3rem;
+  display: grid;
+  place-items: center;
+  gap: 0.2rem;
+}
+
+.gauge-item canvas {
+  width: 140px;
+  height: 90px;
+}
+
+.gauge-label {
+  font-weight: 700;
+}
+
+.gauge-value {
+  font-weight: 800;
+  color: var(--green-900);
+}
+
+.impact-block {
+  border: 1px solid var(--neutral-300);
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #fff;
+  margin-top: 0.6rem;
+}
+
+.impact-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+
+.impact-card {
+  background: var(--neutral-100);
+  border: 1px solid var(--neutral-300);
+  border-radius: 12px;
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.impact-card strong {
+  font-size: 1.2rem;
+  color: var(--green-900);
 }
 
 .chart-legend {
@@ -241,6 +343,21 @@ button.secondary,
 
 .detail-chart {
   margin-top: 0.7rem;
+}
+
+.modal-charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.chart-card.compact {
+  min-height: 140px;
+}
+
+.gauge-block.compact .gauge-item {
+  padding: 0.4rem;
 }
 
 .cre-modal {
