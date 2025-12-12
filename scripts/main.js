@@ -9,6 +9,13 @@ let municipalityToCre = {};
 let selectedCreCode = null;
 let detailChart;
 
+const normalizeName = (str) =>
+  (str || '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toUpperCase()
+    .trim();
+
 function init() {
   creData = loadCreData();
   renderHero();
@@ -108,11 +115,7 @@ function initMap() {
   fetch('sc_municipios.geojson')
     .then((res) => res.json())
     .then((geojson) => {
-      const names = geojson.features.map((f) => f.properties.name).sort();
-      names.forEach((name, idx) => {
-        const cre = creData[idx % creData.length];
-        municipalityToCre[name] = cre.code;
-      });
+      municipalityToCre = buildMunicipalityIndex();
 
       const layer = L.geoJSON(geojson, {
         style: featureStyle,
@@ -123,9 +126,11 @@ function initMap() {
 }
 
 function featureStyle(feature) {
-  const creCode = municipalityToCre[feature.properties.name];
-  const cre = creData.find((c) => c.code === creCode) || creData[0];
-  const baseColor = cre.hasAssessoria ? greenPalette[cre.colorIndex % greenPalette.length] : neutralGray;
+  const creCode =
+    municipalityToCre[feature.properties.name] || municipalityToCre[normalizeName(feature.properties.name)];
+  const cre = creData.find((c) => c.code === creCode);
+  const baseColor =
+    cre && cre.hasAssessoria ? greenPalette[cre.colorIndex % greenPalette.length] : neutralGray;
   return {
     color: '#ffffff',
     weight: 0.5,
@@ -143,7 +148,8 @@ function attachFeatureEvents(feature, layer) {
 }
 
 function highlightFeature(e, feature) {
-  const creCode = municipalityToCre[feature.properties.name];
+  const creCode =
+    municipalityToCre[feature.properties.name] || municipalityToCre[normalizeName(feature.properties.name)];
   const cre = creData.find((c) => c.code === creCode);
   e.target.setStyle({ weight: 2, color: '#0b7a3d' });
   const tip = document.getElementById('map-tooltip');
@@ -157,11 +163,30 @@ function resetHighlight(e, feature) {
 }
 
 function selectCre(municipioName) {
-  const creCode = municipalityToCre[municipioName];
+  const creCode = municipalityToCre[municipioName] || municipalityToCre[normalizeName(municipioName)];
   selectedCreCode = creCode;
   const cre = creData.find((c) => c.code === creCode);
   if (!cre) return;
   renderCreDetail(cre, municipioName);
+}
+
+function buildMunicipalityIndex() {
+  const index = {};
+  const creLookup = {};
+  creData.forEach((cre) => {
+    const creName = cre.name.split(' - ')[1];
+    creLookup[normalizeName(creName)] = cre.code;
+  });
+
+  Object.entries(MUNICIPALITY_CRE_MAP).forEach(([municipio, creName]) => {
+    const code = creLookup[normalizeName(creName)];
+    if (code) {
+      index[municipio] = code;
+      index[normalizeName(municipio)] = code;
+    }
+  });
+
+  return index;
 }
 
 function renderCreDetail(cre, municipioName) {
